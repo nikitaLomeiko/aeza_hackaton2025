@@ -1,56 +1,76 @@
-import { createEvent, createStore } from "effector";
-import { IProject, IProjectState } from "./project.type";
-import { DockerComposeConfigWithCoords, ServiceConfigWithCoords } from "types/docker-compose.type";
+import { createEvent, createStore } from 'effector'
+import { IProject, IProjectState } from './project.type'
+import { Node } from '@xyflow/react'
 
-const STORAGE_KEY = "projects";
+const STORAGE_KEY = 'projects'
 
 // Загрузка из localStorage при инициализации
 const loadFromStorage = (): IProjectState => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? { currentId: "", projects: JSON.parse(stored) } : { currentId: "", projects: [] };
-};
+  const stored = localStorage.getItem(STORAGE_KEY)
+  return stored
+    ? { currentId: '', projects: JSON.parse(stored) }
+    : { currentId: '', projects: [] }
+}
 
 // Сохранение в localStorage
-const saveToStorage = (projects: IProject[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-};
+export const saveToStorage = (projects: IProject[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(projects))
+}
 
 // События
-export const addNewProject = createEvent<IProject>();
-export const deleteProject = createEvent<string>();
-export const updateProject = createEvent<IProject>();
-export const selectProject = createEvent<string>();
+export const addNewProject = createEvent<IProject>()
+export const deleteProject = createEvent<string>()
+export const updateProject = createEvent<IProject>()
+export const selectProject = createEvent<string>()
 
-export const addNewDockerService = createEvent<ServiceConfigWithCoords>();
+export const addNewNode = createEvent<Node>()
+export const setNodesByCurrentProject = createEvent<Node[]>()
 
 // Стор
 export const $project = createStore<IProjectState>(loadFromStorage())
   .on(addNewProject, (project, newProject) => {
-    const updatedProjects = [...project.projects, newProject];
-    saveToStorage(updatedProjects);
-    return { ...project, projects: updatedProjects };
+    const updatedProjects = [...project.projects, newProject]
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
   })
   .on(deleteProject, (project, projectId) => {
-    const updatedProjects = project.projects.filter((project) => project.id !== projectId);
-    saveToStorage(updatedProjects);
-    return { ...project, projects: updatedProjects };
+    const updatedProjects = project.projects.filter(
+      (project) => project.id !== projectId
+    )
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
   })
   .on(updateProject, (project, updatedProject) => {
     const updatedProjects = project.projects.map((project) =>
       project.id === updatedProject.id ? updatedProject : project
-    );
-    saveToStorage(updatedProjects);
-    return { ...project, projects: updatedProjects };
+    )
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
   })
-  .on(addNewDockerService, (project, service) => {
+  .on(addNewNode, (project, node) => {
     const updatedProjects = project.projects.map((prj) =>
       prj.id === project.currentId
-        ? { ...prj, docker: { ...prj.docker, services: [...(prj.docker?.services || []), service] } }
+        ? {
+            ...prj,
+            nodes: [...(prj.nodes || []), node],
+          }
         : prj
-    );
-    saveToStorage(updatedProjects);
-    return { ...project, projects: updatedProjects };
+    )
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
+  })
+  .on(setNodesByCurrentProject, (project, nodes) => {
+    const updatedProjects = project.projects.map((prj) =>
+      prj.id === project.currentId
+        ? {
+            ...prj,
+            nodes: nodes,
+          }
+        : prj
+    )
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
   })
   .on(selectProject, (project, id) => {
-    return { ...project, currentId: id };
-  });
+    return { ...project, currentId: id }
+  })

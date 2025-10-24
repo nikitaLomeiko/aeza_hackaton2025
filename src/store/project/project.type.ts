@@ -1,4 +1,4 @@
-import { DockerComposeConfigWithCoords } from "types/docker-compose.type";
+import { Node } from "@xyflow/react";
 
 export interface IProjectState {
   projects: IProject[];
@@ -9,5 +9,5 @@ export interface IProject {
   id: string;
   name: string;
   status: string;
-  docker?: DockerComposeConfigWithCoords;
+  nodes?: Node[];
 }
