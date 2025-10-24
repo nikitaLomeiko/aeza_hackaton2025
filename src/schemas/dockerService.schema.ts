@@ -10,6 +10,7 @@ import {
   safeParse,
   pipe,
   minLength,
+  InferOutput,
 } from 'valibot'
 
 // Порт — строка вида "8080:80" или просто "80"
@@ -38,7 +39,7 @@ export const ServiceConfigSchema = object({
   working_dir: optional(string()),
 })
 
-export type ValidatedServiceConfig = typeof ServiceConfigSchema.type
+export type ValidatedServiceConfig = InferOutput<typeof ServiceConfigSchema>
 
 // Экспортируем функции для удобства
 export const validateServiceConfig = (data: unknown) =>

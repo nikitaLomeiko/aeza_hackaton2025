@@ -20,8 +20,14 @@ import {
   $project,
   setNodesByCurrentProject,
 } from 'store/project'
-import { serviceNodeTypes } from './nodes/service.node'
-import { throttle } from 'lodash';
+import { CustomNode } from './nodes/service.node'
+import { VolumeInfo } from './nodes/volume.node'
+import { debounce } from 'lodash';
+
+const customNode = {
+  volume: VolumeInfo,
+  service: CustomNode,
+}
 
 
 const initialEdges: Edge[] = [
@@ -34,6 +40,7 @@ const initialEdges: Edge[] = [
 
 export const CustomReactFlow = () => {
   const projectState = useUnit($project)
+
   const currentProject = projectState.projects.find(
     (item) => item.id === projectState.currentId
   )
@@ -41,25 +48,30 @@ export const CustomReactFlow = () => {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>(initialEdges)
 
+  useEffect(() => console.log(currentProject?.id), [currentProject?.id])
+
   useEffect(() => {
     if (currentProject?.nodes) {
       setNodes(currentProject.nodes)
     }
+    else{
+      setNodes([])
+    }
   }, [currentProject?.nodes])
 
-  const throttledSetNodes = useMemo(
+  const debouncedSetNodes = useMemo(
     () =>
-      throttle((nodes: Node[]) => {
+      debounce((nodes: Node[]) => {
         setNodesByCurrentProject(nodes)
         console.log('sdgsdg')
-      }, 1000),
+      }, 200),
     []
   )
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot))
-      throttledSetNodes(nodes)
+      debouncedSetNodes(nodes)
     },
     [nodes]
   )
@@ -82,7 +94,7 @@ export const CustomReactFlow = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        nodeTypes={serviceNodeTypes}
+        nodeTypes={customNode}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         fitView

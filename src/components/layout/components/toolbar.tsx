@@ -1,12 +1,13 @@
-import { ServiceForm } from "components/forms/service-form";
-import { Modal } from "components/ui/modal";
-import { useState } from "react";
+import { ServiceForm } from 'components/forms/service-form'
+import { VolumeForm } from 'components/forms/volume-form/volume.form'
+import { Modal } from 'components/ui/modal'
+import { useState } from 'react'
 
 export const Toolbar = () => {
   const tools = [
     {
       id: 1,
-      name: "service",
+      name: 'service',
       icon: (
         <svg
           stroke="currentColor"
@@ -24,9 +25,14 @@ export const Toolbar = () => {
     },
     {
       id: 2,
-      name: "Изображение",
+      name: 'Изображение',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -38,23 +44,32 @@ export const Toolbar = () => {
     },
     {
       id: 3,
-      name: "Кнопка",
+      name: 'volume',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"
-          />
+        <svg
+          stroke="currentColor"
+          fill="currentColor"
+          stroke-width="0"
+          viewBox="0 0 16 16"
+          height="1em"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M8.785 9.896A3.001 3.001 0 0 0 8 4a3 3 0 0 0-.891 5.865c.667-.44 1.396-.91 1.955-1.268.224-.144.483.115.34.34zM9 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0"></path>
+          <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm9 1.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m0 13a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-9.5.5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1M4 1.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m2.882 11.177a1.102 1.102 0 0 1-1.56-1.559c.1-.098.396-.314.795-.588a4 4 0 1 1 1.946.47c-.537.813-1.02 1.515-1.181 1.677"></path>
         </svg>
       ),
     },
     {
       id: 4,
-      name: "Форма",
+      name: 'Форма',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -66,9 +81,14 @@ export const Toolbar = () => {
     },
     {
       id: 5,
-      name: "Видео",
+      name: 'Видео',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -80,9 +100,14 @@ export const Toolbar = () => {
     },
     {
       id: 6,
-      name: "Еще",
+      name: 'Еще',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -92,13 +117,15 @@ export const Toolbar = () => {
         </svg>
       ),
     },
-  ];
+  ]
 
-  const [openModal, setOpenModal] = useState(false);
+  const [openModal, setOpenModal] = useState(false)
+  const [typeForm, setTypeForm] = useState('')
 
   const handleToolClick = (toolName: string) => {
-    setOpenModal(true);
-  };
+    setOpenModal(true)
+    setTypeForm(toolName)
+  }
 
   return (
     <>
@@ -119,8 +146,9 @@ export const Toolbar = () => {
         </div>
       </div>
       <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
-        <ServiceForm onCancel={() => setOpenModal(false)} />
+        {typeForm === 'service' && <ServiceForm onCancel={() => setOpenModal(false)} />}
+        {typeForm === 'volume' && <VolumeForm onCancel={() => setOpenModal(false)}/>}
       </Modal>
     </>
-  );
-};
+  )
+}
