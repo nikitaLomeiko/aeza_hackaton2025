@@ -47,7 +47,7 @@ export const NetworkForm: React.FC<NetworkFormProps> = ({
       gateway?: string
       aux_addresses?: { key: string; value: string }[]
     }>
-  >(formData.ipam?.config || [{}])
+  >((formData.ipam?.config as any) || [{}])
 
   const [ipamOptions, setIpamOptions] = useState<
     { key: string; value: string }[]
@@ -408,7 +408,10 @@ export const NetworkForm: React.FC<NetworkFormProps> = ({
           </label>
           <div className="space-y-4">
             {ipamConfigs.map((config, index) => (
-              <div key={index} className="border p-4 rounded-md space-y-3">
+              <div
+                key={index}
+                className="border p-4 rounded-md space-y-3 flex flex-col gap-2"
+              >
                 <div className="flex justify-between items-center">
                   <h4 className="font-medium">Config {index + 1}</h4>
                   <button

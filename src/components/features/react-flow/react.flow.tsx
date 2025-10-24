@@ -16,19 +16,17 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  $project,
-  setNodesByCurrentProject,
-} from 'store/project'
+import { $project, setNodesByCurrentProject } from 'store/project'
 import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
-import { debounce } from 'lodash';
+import { debounce } from 'lodash'
+import { NetworkNode } from './nodes/network.node'
 
 const customNode = {
   volume: VolumeInfo,
   service: CustomNode,
+  network: NetworkNode,
 }
-
 
 const initialEdges: Edge[] = [
   {
@@ -53,8 +51,7 @@ export const CustomReactFlow = () => {
   useEffect(() => {
     if (currentProject?.nodes) {
       setNodes(currentProject.nodes)
-    }
-    else{
+    } else {
       setNodes([])
     }
   }, [currentProject?.nodes])
