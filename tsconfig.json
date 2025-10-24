@@ -21,7 +21,8 @@
       "pages/*": ["pages/*"],
       "store/*": ["store/*"],
       "services/*": ["services/*"],
-      "types/*": ["types/*"]
+      "types/*": ["types/*"],
+      "schemas/*": ["schemas/*"]
     },
 
     /* Linting */
