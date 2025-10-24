@@ -21,7 +21,7 @@ export const deleteProject = createEvent<string>();
 export const updateProject = createEvent<IProject>();
 export const selectProject = createEvent<string>();
 
-export const updateDrockerSevices = createEvent<Record<string, ServiceConfigWithCoords>>();
+export const addNewDockerService = createEvent<ServiceConfigWithCoords>();
 
 // Стор
 export const $project = createStore<IProjectState>(loadFromStorage())
@@ -42,9 +42,11 @@ export const $project = createStore<IProjectState>(loadFromStorage())
     saveToStorage(updatedProjects);
     return { ...project, projects: updatedProjects };
   })
-  .on(updateDrockerSevices, (project, services) => {
+  .on(addNewDockerService, (project, service) => {
     const updatedProjects = project.projects.map((prj) =>
-      prj.id === project.currentId ? { ...prj, docker: { ...prj.docker, services: services  } } : prj
+      prj.id === project.currentId
+        ? { ...prj, docker: { ...prj.docker, services: [...(prj.docker?.services || []), service] } }
+        : prj
     );
     saveToStorage(updatedProjects);
     return { ...project, projects: updatedProjects };

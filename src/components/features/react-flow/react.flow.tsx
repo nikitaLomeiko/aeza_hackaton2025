@@ -11,25 +11,13 @@ import {
   EdgeChange,
   Node,
   NodeChange,
-  BackgroundVariant,
+  BackgroundVariant
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useUnit } from "effector-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { $project } from "store/project";
-
-const initialNodes: Node[] = [
-  {
-    id: "n1",
-    position: { x: 0, y: 0 },
-    data: { label: "Node 1" },
-  },
-  {
-    id: "n2",
-    position: { x: 0, y: 100 },
-    data: { label: "Node 2" },
-  },
-];
+import { serviceNodeTypes } from "./nodes/service.node";
 
 const initialEdges: Edge[] = [
   {
@@ -41,27 +29,41 @@ const initialEdges: Edge[] = [
 
 export const CustomReactFlow = () => {
   const projectState = useUnit($project);
-  const currentProject = projectState.projects.find(item => item.id === projectState.currentId)
+  const currentProject = projectState.projects.find((item) => item.id === projectState.currentId);
 
-  const convertDockerToNode = () => {
-    const nodes: Node[] = []
-
-    if(currentProject?.docker){
-        const serivces = currentProject.docker.services
-        Object.keys(serivces).forEach(item => {
-            nodes.push({
-                id: serivces[item].id,
-                position: {x: serivces[item].x, y: serivces[item].y},
-                data: {...serivces[item]}
-            })
-        })
-    }
-
-    return nodes
-  }
-
-  const [nodes, setNodes] = useState<Node[]>(convertDockerToNode());
+  const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+
+  useEffect(() => {
+    const convertDockerToNode = () => {
+      const nodes: Node[] = [];
+
+      if (currentProject?.docker) {
+        const serivces = currentProject.docker.services;
+
+        let xoffset = 0;
+        let yoffset = 0;
+
+        serivces.forEach((item) => {
+          nodes.push({
+            id: item.id,
+            position: { x: item.x + xoffset, y: item.y + yoffset },
+            type: "service",
+            data: { ...item },
+          });
+
+          xoffset += 150;
+          yoffset += 150;
+        });
+      }
+
+      return nodes;
+    };
+
+    const test = convertDockerToNode();
+    console.log(test);
+    setNodes(test);
+  }, [currentProject]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
@@ -84,9 +86,9 @@ export const CustomReactFlow = () => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={serviceNodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
         fitView
       >
         <Controls />

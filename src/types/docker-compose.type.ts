@@ -248,7 +248,7 @@ export interface DockerComposeConfig {
 export interface DockerComposeConfigWithCoords {
   version?: string;
   name?: string;
-  services: Record<string, ServiceConfigWithCoords>;
+  services: ServiceConfigWithCoords[];
   networks?: Record<string, NetworkConfigWithCoords>;
   volumes?: Record<string, VolumeConfigWithCoords>;
   secrets?: Record<string, SecretConfigWithCoords>;
