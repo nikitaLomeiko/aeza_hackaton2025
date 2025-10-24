@@ -23,10 +23,12 @@ import {
 import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
 import { debounce } from 'lodash';
+import { SecretInfo } from './nodes/secret.node'
 
 const customNode = {
   volume: VolumeInfo,
   service: CustomNode,
+  secret: SecretInfo
 }
 
 

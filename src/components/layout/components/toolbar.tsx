@@ -1,4 +1,5 @@
 import { NetworkForm } from 'components/forms/network-form'
+import { SecretForm } from 'components/forms/secret-form'
 import { ServiceForm } from 'components/forms/service-form'
 
 import { VolumeForm } from 'components/forms/volume-form/volume.form'
@@ -62,20 +63,18 @@ export const Toolbar = () => {
     },
     {
       id: 4,
-      name: 'Форма',
+      name: 'secret',
       icon: (
         <svg
-          className="w-5 h-5"
-          fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24"
+          fill="currentColor"
+          stroke-width="0"
+          viewBox="0 0 512 512"
+          height="1em"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
+          <path d="M512 176.001C512 273.203 433.202 352 336 352c-11.22 0-22.19-1.062-32.827-3.069l-24.012 27.014A23.999 23.999 0 0 1 261.223 384H224v40c0 13.255-10.745 24-24 24h-40v40c0 13.255-10.745 24-24 24H24c-13.255 0-24-10.745-24-24v-78.059c0-6.365 2.529-12.47 7.029-16.971l161.802-161.802C163.108 213.814 160 195.271 160 176 160 78.798 238.797.001 335.999 0 433.488-.001 512 78.511 512 176.001zM336 128c0 26.51 21.49 48 48 48s48-21.49 48-48-21.49-48-48-48-48 21.49-48 48z"></path>
         </svg>
       ),
     },
@@ -155,6 +154,9 @@ export const Toolbar = () => {
         )}
         {typeForm === 'network' && (
           <NetworkForm onCancel={() => setOpenModal(false)} />
+        )}
+        {typeForm === 'secret' && (
+          <SecretForm onCancel={() => setOpenModal(false)} />
         )}
       </Modal>
       {/* <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
