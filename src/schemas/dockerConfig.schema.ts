@@ -1,6 +1,6 @@
 import * as v from 'valibot'
 
-const BaseConfigConfigSchema = v.object({
+export const ConfigConfigSchema = v.object({
   file: v.optional(v.string()),
   external: v.optional(
     v.union([
@@ -11,17 +11,12 @@ const BaseConfigConfigSchema = v.object({
     ])
   ),
   labels: v.optional(v.record(v.string(), v.string())),
-  name: v.optional(v.string()),
+  name: v.pipe(
+    v.string('Name must be a string'),
+    v.minLength(1, 'Name is required and cannot be empty')
+  ),
   content: v.optional(v.string()),
 })
-
-export const ConfigConfigSchema = v.pipe(
-  BaseConfigConfigSchema,
-  v.check(
-    (input) => !!input.file || !!input.content,
-    'Either file or content must be provided'
-  )
-)
 
 export type ValidatedConfigConfig = v.InferOutput<typeof ConfigConfigSchema>
 

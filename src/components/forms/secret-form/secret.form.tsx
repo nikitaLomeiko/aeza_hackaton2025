@@ -118,29 +118,18 @@ export const SecretForm: React.FC<SecretFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Подготавливаем данные для отправки
     const submitData: Partial<SecretConfig> = {
       ...formData,
-      // Очищаем пустые объекты
       labels:
         Object.keys(formData.labels || {}).length > 0
           ? formData.labels
           : undefined,
-      // Для external: если это объект с пустым name, преобразуем в true
       external:
         typeof formData.external === 'object' && formData.external?.name
           ? formData.external
           : formData.external === true
           ? true
           : undefined,
-    }
-
-    // Дополнительная проверка на наличие источника секрета
-    if (!submitData.file && !submitData.content && !submitData.environment) {
-      setErrors({
-        file: 'Either file, content, or environment must be provided',
-      })
-      return
     }
 
     // Валидация через Valibot
@@ -155,6 +144,15 @@ export const SecretForm: React.FC<SecretFormProps> = ({
         }
       }
       setErrors(fieldErrors)
+
+      if (!submitData.file && !submitData.content && !submitData.environment) {
+        setErrors({
+          ...fieldErrors,
+          file: 'Either file, content, or environment must be provided',
+          content: 'Either file, content, or environment must be provided',
+          environment: 'Either file, content, or environment must be provided',
+        })
+      }
       return
     }
 

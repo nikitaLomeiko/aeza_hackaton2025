@@ -31,7 +31,7 @@ export const NetworkConfigSchema = v.object({
       }),
     ])
   ),
-  name: v.optional(v.string()),
+  name: v.pipe(v.string(), v.minLength(1)),
 })
 
 export type ValidatedNetworkConfig = v.InferOutput<typeof NetworkConfigSchema>

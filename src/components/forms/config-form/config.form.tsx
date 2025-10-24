@@ -5,6 +5,7 @@ import {
 } from 'schemas/dockerConfig.schema'
 import type { ConfigConfig } from 'types/docker-compose.type'
 import { addNewNode } from 'store/project/project.store'
+import { string } from 'valibot'
 
 interface ConfigFormProps {
   initialData?: Partial<ConfigConfig>
@@ -102,7 +103,6 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Подготавливаем данные для отправки
     const submitData: Partial<ConfigConfig> = {
       ...formData,
       labels:
@@ -117,24 +117,36 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
           : undefined,
     }
 
-    // Дополнительная проверка на наличие file или content
+    // Объединенная проверка
+    const customErrors: Record<string, string> = {}
+
+    // Проверка на наличие file или content
     if (!submitData.file && !submitData.content) {
-      setErrors({ file: 'Either file or content must be provided' })
-      return
+      customErrors.file = 'Either file or content must be provided'
+      customErrors.content = 'Either file or content must be provided'
     }
 
-    // Валидация через Valibot
     const result = validateConfigConfig(submitData)
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
       for (const issue of result.issues) {
-        const path = issue.path?.[0]?.key
-        if (typeof path === 'string') {
-          fieldErrors[path] = issue.message || 'Invalid value'
+        const key =
+          typeof issue.path?.[0] === 'string'
+            ? issue.path[0]
+            : issue.path?.[0]?.key
+
+        if (key) {
+          fieldErrors[key as string] = issue.message || 'Invalid value'
         }
       }
-      setErrors(fieldErrors)
+      setErrors({ ...customErrors, ...fieldErrors })
+      return
+    }
+
+    // Если есть кастомные ошибки, показываем их и выходим
+    if (Object.keys(customErrors).length > 0) {
+      setErrors(customErrors)
       return
     }
 

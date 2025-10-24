@@ -11,7 +11,10 @@ export const SecretConfigSchema = v.object({
     ])
   ),
   labels: v.optional(v.record(v.string(), v.string())),
-  name: v.optional(v.string()),
+  name: v.pipe(
+    v.string('Name must be a string'),
+    v.minLength(1, 'Name is required and cannot be empty')
+  ),
   environment: v.optional(v.string()),
   content: v.optional(v.string()),
 })

@@ -12,7 +12,7 @@ export const VolumeConfigSchema = v.object({
     ])
   ),
   labels: v.optional(v.record(v.string(), v.string())),
-  name: v.optional(v.string()),
+  name: v.pipe(v.string(), v.minLength(1)),
 })
 
 export type ValidatedVolumeConfig = v.InferOutput<typeof VolumeConfigSchema>
