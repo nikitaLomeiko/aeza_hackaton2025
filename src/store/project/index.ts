@@ -4,6 +4,7 @@ export {
   addNewNode,
   deleteProject,
   saveToStorage,
+  setEdgesByCurrentProject,
   setNodesByCurrentProject,
   selectProject,
   updateProject,

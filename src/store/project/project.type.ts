@@ -1,4 +1,4 @@
-import { Node } from "@xyflow/react";
+import { Edge, Node } from "@xyflow/react";
 
 export interface IProjectState {
   projects: IProject[];
@@ -10,4 +10,5 @@ export interface IProject {
   name: string;
   status: string;
   nodes?: Node[];
+  edges?: Edge[]
 }

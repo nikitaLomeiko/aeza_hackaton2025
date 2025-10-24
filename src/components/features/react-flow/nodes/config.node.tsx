@@ -73,7 +73,7 @@ export const ConfigInfo: React.FC<NodeProps<TypeConfigkConfig>> = ({ data }) => 
   }
 
   return (
-    <NodeWrapper onDelete={() => console.log('Delete network')}>
+    <NodeWrapper typeHandle='target' onDelete={() => console.log('Delete network')}>
       <div className="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex justify-between items-start">

@@ -207,7 +207,7 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
   }
 
   return (
-    <NodeWrapper onDelete={() => console.log('Delete network')}>
+    <NodeWrapper typeHandle='target' onDelete={() => console.log('Delete network')}>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">

@@ -16,7 +16,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { $project, setNodesByCurrentProject } from 'store/project'
+import { $project, setEdgesByCurrentProject, setNodesByCurrentProject } from 'store/project'
 import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
 import { debounce } from 'lodash'
@@ -32,14 +32,6 @@ const customNode = {
   config: ConfigInfo
 }
 
-const initialEdges: Edge[] = [
-  {
-    id: 'n1-n2',
-    source: 'n1',
-    target: 'n2',
-  },
-]
-
 export const CustomReactFlow = () => {
   const projectState = useUnit($project)
 
@@ -48,9 +40,7 @@ export const CustomReactFlow = () => {
   )
 
   const [nodes, setNodes] = useState<Node[]>([])
-  const [edges, setEdges] = useState<Edge[]>(initialEdges)
-
-  useEffect(() => console.log(currentProject?.id), [currentProject?.id])
+  const [edges, setEdges] = useState<Edge[]>([])
 
   useEffect(() => {
     if (currentProject?.nodes) {
@@ -60,11 +50,22 @@ export const CustomReactFlow = () => {
     }
   }, [currentProject?.nodes])
 
+  useEffect(() => {
+    if (currentProject?.edges) {
+      setEdges(currentProject.edges)
+    } else {
+      setEdges([])
+    }
+  }, [currentProject?.edges])
+
+  useEffect(() => {
+    setEdgesByCurrentProject(edges)
+  }, [edges])
+
   const debouncedSetNodes = useMemo(
     () =>
       debounce((nodes: Node[]) => {
         setNodesByCurrentProject(nodes)
-        console.log('sdgsdg')
       }, 200),
     []
   )
@@ -78,14 +79,16 @@ export const CustomReactFlow = () => {
   )
 
   const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+    (changes: EdgeChange[]) => {
+      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot))
+    },
     []
   )
 
   const onConnect = useCallback(
-    (params: Connection | Edge) =>
-      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
+    (params: Connection | Edge) => {
+      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
+    },
     []
   )
 
@@ -98,6 +101,7 @@ export const CustomReactFlow = () => {
         nodeTypes={customNode}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         fitView
       >
         <Controls />

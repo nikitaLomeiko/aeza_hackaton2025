@@ -1,6 +1,6 @@
 import { createEvent, createStore } from 'effector'
 import { IProject, IProjectState } from './project.type'
-import { Node } from '@xyflow/react'
+import { Edge, Node } from '@xyflow/react'
 
 const STORAGE_KEY = 'projects'
 
@@ -25,6 +25,8 @@ export const selectProject = createEvent<string>()
 
 export const addNewNode = createEvent<Node>()
 export const setNodesByCurrentProject = createEvent<Node[]>()
+
+export const setEdgesByCurrentProject = createEvent<Edge[]>()
 
 // Стор
 export const $project = createStore<IProjectState>(loadFromStorage())
@@ -65,6 +67,18 @@ export const $project = createStore<IProjectState>(loadFromStorage())
         ? {
             ...prj,
             nodes: nodes,
+          }
+        : prj
+    )
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
+  })
+  .on(setEdgesByCurrentProject, (project, edges) => {
+    const updatedProjects = project.projects.map((prj) =>
+      prj.id === project.currentId
+        ? {
+            ...prj,
+            edges: edges,
           }
         : prj
     )

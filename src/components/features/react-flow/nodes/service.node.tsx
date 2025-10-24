@@ -42,7 +42,7 @@ export const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => 
   };
 
   return (
-    <NodeWrapper onDelete={() => console.log('sdg')}>
+    <NodeWrapper typeHandle='source' onDelete={() => console.log('sdg')}>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">

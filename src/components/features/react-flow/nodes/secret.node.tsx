@@ -88,7 +88,7 @@ export const SecretInfo: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => 
   }
 
   return (
-    <NodeWrapper onDelete={() => console.log('sdg')}>
+    <NodeWrapper typeHandle='target' onDelete={() => console.log('sdg')}>
       <div className="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex justify-between items-start">
