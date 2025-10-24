@@ -1,15 +1,10 @@
 import React, { useState } from "react";
-<<<<<<< HEAD
-import { addNewDockerService } from "store/project/project.store";
 import {
   validateServiceConfig,
   ValidatedServiceConfig,
 } from "schemas/dockerService.schema";
 import type { PortMapping, ServiceConfig } from "types/docker-compose.type";
-=======
 import { addNewNode } from "store/project/project.store";
-import { PortMapping, ServiceConfig } from "types/docker-compose.type";
->>>>>>> dev_backup
 
 interface ServiceFormProps {
   initialData?: Partial<ServiceConfig>;
@@ -120,7 +115,6 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
       })
     );
 
-<<<<<<< HEAD
     // 🔍 Валидация через Valibot
     const result = validateServiceConfig(submitData);
 
@@ -140,15 +134,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
 
     // ✅ Успешная валидация
     const validData = result.output as ValidatedServiceConfig;
-    addNewDockerService({
-      id: String(Date.now()),
-      x: 0,
-      y: 0,
-      ...validData,
-    });
-=======
-    addNewNode({id: String(Date.now()), position: {x: 0, y: 0}, type: 'service', data: {...submitData}});
->>>>>>> dev_backup
+    addNewNode({id: String(Date.now()), position: {x: 0, y: 0}, type: 'service', data: {...validData}});
     onCancel?.();
   };
 

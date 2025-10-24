@@ -10,36 +10,36 @@ import {
   safeParse,
   pipe,
   minLength,
-} from "valibot";
+} from 'valibot'
 
 // Порт — строка вида "8080:80" или просто "80"
 const PortMappingSchema = string([
   // Можно добавить кастомный парсер, если нужно строгое соответствие формату
-]);
+])
 
 // Перезапуск — только допустимые значения
 const RestartPolicySchema = union([
-  literal("no"),
-  literal("always"),
-  literal("on-failure"),
-  literal("unless-stopped"),
-]);
+  literal('no'),
+  literal('always'),
+  literal('on-failure'),
+  literal('unless-stopped'),
+])
 
 // Схема для ServiceConfig (только обязательные и валидируемые поля)
 export const ServiceConfigSchema = object({
   image: string(), // обязательно
   container_name: pipe(string(), minLength(5)),
   ports: optional(array(PortMappingSchema)),
-  environment: optional(record(string())),
+  environment: optional(record(string(), string())),
   restart: optional(RestartPolicySchema),
   command: optional(union([string(), array(string())])),
   entrypoint: optional(union([string(), array(string())])),
   user: optional(string()),
   working_dir: optional(string()),
-});
+})
 
-export type ValidatedServiceConfig = typeof ServiceConfigSchema._type;
+export type ValidatedServiceConfig = typeof ServiceConfigSchema.type
 
 // Экспортируем функции для удобства
 export const validateServiceConfig = (data: unknown) =>
-  safeParse(ServiceConfigSchema, data);
+  safeParse(ServiceConfigSchema, data)
