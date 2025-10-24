@@ -232,7 +232,7 @@ export const NetworkForm: React.FC<NetworkFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white p-6 rounded-lg shadow-md max-h-[80vh] overflow-y-auto"
+      className="space-y-6 bg-white p-6 rounded-lg shadow-md overflow-y-auto"
     >
       {/* Network Name */}
       <div>

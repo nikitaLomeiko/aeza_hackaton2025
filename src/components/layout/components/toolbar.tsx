@@ -1,3 +1,4 @@
+import { NetworkForm } from 'components/forms/network-form'
 import { ServiceForm } from 'components/forms/service-form'
 
 import { VolumeForm } from 'components/forms/volume-form/volume.form'
@@ -26,20 +27,18 @@ export const Toolbar = () => {
     },
     {
       id: 2,
-      name: 'Изображение',
+      name: 'network',
       icon: (
         <svg
-          className="w-5 h-5"
-          fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24"
+          fill="currentColor"
+          stroke-width="0"
+          viewBox="0 0 512 512"
+          height="1em"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
+          <path d="M384 32a64 64 0 0 0-57.67 91.73l-70.83 80.82-70.19-80.1A64 64 0 1 0 128 160c1.1 0 2.2 0 3.29-.08L224 265.7v94.91a64 64 0 1 0 64 0v-96.05l91.78-104.71c1.39.09 2.8.15 4.22.15a64 64 0 0 0 0-128zM96 96a32 32 0 1 1 32 32 32 32 0 0 1-32-32zm160 352a32 32 0 1 1 32-32 32 32 0 0 1-32 32zm128-320a32 32 0 1 1 32-32 32 32 0 0 1-32 32z"></path>
         </svg>
       ),
     },
@@ -148,8 +147,15 @@ export const Toolbar = () => {
         </div>
       </div>
       <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
-        {typeForm === 'service' && <ServiceForm onCancel={() => setOpenModal(false)} />}
-        {typeForm === 'volume' && <VolumeForm onCancel={() => setOpenModal(false)}/>}
+        {typeForm === 'service' && (
+          <ServiceForm onCancel={() => setOpenModal(false)} />
+        )}
+        {typeForm === 'volume' && (
+          <VolumeForm onCancel={() => setOpenModal(false)} />
+        )}
+        {typeForm === 'network' && (
+          <NetworkForm onCancel={() => setOpenModal(false)} />
+        )}
       </Modal>
       {/* <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
         <ServiceForm onCancel={() => setOpenModal(false)} />
