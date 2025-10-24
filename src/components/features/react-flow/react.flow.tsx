@@ -21,11 +21,15 @@ import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
 import { debounce } from 'lodash'
 import { NetworkNode } from './nodes/network.node'
+import { SecretInfo } from './nodes/secret.node'
+import { ConfigInfo } from './nodes/config.node'
 
 const customNode = {
   volume: VolumeInfo,
   service: CustomNode,
   network: NetworkNode,
+  secret: SecretInfo,
+  config: ConfigInfo
 }
 
 const initialEdges: Edge[] = [
