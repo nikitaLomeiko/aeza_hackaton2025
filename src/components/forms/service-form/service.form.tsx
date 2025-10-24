@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { addNewDockerService } from "store/project/project.store";
+import { addNewNode } from "store/project/project.store";
 import { PortMapping, ServiceConfig } from "types/docker-compose.type";
 
 interface ServiceFormProps {
@@ -85,7 +85,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({ initialData = {}, onCa
       })
     ) as ServiceConfig;
 
-    addNewDockerService({id: String(Date.now()), x: 0, y: 0, ...submitData});
+    addNewNode({id: String(Date.now()), position: {x: 0, y: 0}, type: 'service', data: {...submitData}});
     onCancel?.();
   };
 
