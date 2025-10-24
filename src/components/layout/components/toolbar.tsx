@@ -1,12 +1,12 @@
-import { ServiceForm } from "components/forms/service-form";
-import { Modal } from "components/ui/modal";
-import { useState } from "react";
+import { ServiceForm } from 'components/forms/service-form'
+import { Modal } from 'components/ui/modal'
+import { useState } from 'react'
 
 export const Toolbar = () => {
   const tools = [
     {
       id: 1,
-      name: "service",
+      name: 'service',
       icon: (
         <svg
           stroke="currentColor"
@@ -24,9 +24,14 @@ export const Toolbar = () => {
     },
     {
       id: 2,
-      name: "Изображение",
+      name: 'Изображение',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -38,9 +43,14 @@ export const Toolbar = () => {
     },
     {
       id: 3,
-      name: "Кнопка",
+      name: 'Кнопка',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -52,9 +62,14 @@ export const Toolbar = () => {
     },
     {
       id: 4,
-      name: "Форма",
+      name: 'Форма',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -66,9 +81,14 @@ export const Toolbar = () => {
     },
     {
       id: 5,
-      name: "Видео",
+      name: 'Видео',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -80,9 +100,14 @@ export const Toolbar = () => {
     },
     {
       id: 6,
-      name: "Еще",
+      name: 'Еще',
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -92,13 +117,13 @@ export const Toolbar = () => {
         </svg>
       ),
     },
-  ];
+  ]
 
-  const [openModal, setOpenModal] = useState(false);
+  const [openModal, setOpenModal] = useState(false)
 
   const handleToolClick = (toolName: string) => {
-    setOpenModal(true);
-  };
+    setOpenModal(true)
+  }
 
   return (
     <>
@@ -121,6 +146,9 @@ export const Toolbar = () => {
       <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
         <ServiceForm onCancel={() => setOpenModal(false)} />
       </Modal>
+      {/* <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
+        <ServiceForm onCancel={() => setOpenModal(false)} />
+      </Modal> */}
     </>
-  );
-};
+  )
+}
