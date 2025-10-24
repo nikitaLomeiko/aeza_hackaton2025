@@ -13,6 +13,7 @@ export default defineConfig({
       store: "/src/store",
       services: "/src/services",
       types: "/src/types",
+      schemas: "/src/schemas",
     },
   },
 });
