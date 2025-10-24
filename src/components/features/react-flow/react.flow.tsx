@@ -18,6 +18,7 @@ import { useUnit } from "effector-react";
 import { useCallback, useEffect, useState } from "react";
 import { $project } from "store/project";
 import { serviceNodeTypes } from "./nodes/service.node";
+import { convertDockerToNode } from "./utils/convertDocketToNode";
 
 const initialEdges: Edge[] = [
   {
@@ -35,34 +36,10 @@ export const CustomReactFlow = () => {
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
   useEffect(() => {
-    const convertDockerToNode = () => {
-      const nodes: Node[] = [];
-
-      if (currentProject?.docker) {
-        const serivces = currentProject.docker.services;
-
-        let xoffset = 0;
-        let yoffset = 0;
-
-        serivces.forEach((item) => {
-          nodes.push({
-            id: item.id,
-            position: { x: item.x + xoffset, y: item.y + yoffset },
-            type: "service",
-            data: { ...item },
-          });
-
-          xoffset += 150;
-          yoffset += 150;
-        });
-      }
-
-      return nodes;
-    };
-
-    const test = convertDockerToNode();
-    console.log(test);
-    setNodes(test);
+    if(currentProject?.docker){
+      const nodes = convertDockerToNode(currentProject?.docker);
+      setNodes(nodes);
+    }
   }, [currentProject]);
 
   const onNodesChange = useCallback(
