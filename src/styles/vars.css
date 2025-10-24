@@ -1,0 +1,64 @@
+@theme {
+
+    /* color-theme */
+
+    --color-primary: #FFFFFF;
+    --color-primary-hover: #FFFFFF;
+
+    --color-secondary: #FFFFFF; 
+    --color-secondary-hover: #FFFFFF;
+
+    --color-accent: #390099; /* logotype | navs | button variant 1 | accent-color */
+    --color-accent-hover: #39009990;
+
+    --color-bg-primary: #f2f4ff;
+    --color-bg-secondary: #fdfffc /* header | form-bg */;
+    --color-surface: #FFFFFF;
+    --color-border: #FFFFFF;
+
+    --color-success: #FFFFFF;
+    --color-error: red;
+    --color-warning: #FFFFFF;
+    --color-info: #FFFFFF;
+
+    --color-title: #000000;
+    --color-subtitle: #333333;
+    --color-overtitle: #33333390;
+    --color-label: #33333390;
+    --color-paragraph: #00000090;
+
+    --color-nav-link: #7b2cbf;
+    --color-nav-link-hover: #c77dff;
+    --color-link: #FFFFFF;
+    --color-link-hover: #FFFFFF;
+
+    --color-opposite-title: #FFFFFF;
+    --color-opposite-subtitle: #FFFFFF;
+    --color-opposite-overtitle: #FFFFFF;
+    --color-opposite-label: #FFFFFF;
+    --color-opposite-paragraph: #FFFFFF;
+
+    --color-opposite-nav-link: #FFFFFF;
+    --color-opposite-link: #FFFFFF;
+
+    /* font-theme */
+
+    --text-size-title: 28px;
+    --text-size-subtitle: 24px;
+    --text-size-overtitle: 20px;
+    --text-size-label: 18px;
+    --text-size-paragraph: 16px;
+
+    --text-size-nav-link: 16px;
+    --text-size-link: 14px;
+
+    /* container-theme */
+
+    --max-width-container-max-width: 1840px;
+    --padding-container-padding: 0 20px;
+
+    /* entities-theme */
+
+    --height-header-height: 70px;
+    --width-sidebar-width: 400px;
+}
