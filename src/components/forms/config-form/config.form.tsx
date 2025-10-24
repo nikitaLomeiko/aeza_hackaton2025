@@ -1,10 +1,15 @@
-import React, { useState } from "react";
-import type { ConfigConfig } from "types/docker-compose.type";
-import { addNewNode } from "store/project/project.store";
+import React, { useState } from 'react'
+import {
+  validateConfigConfig,
+  ValidatedConfigConfig,
+} from 'schemas/dockerConfig.schema'
+import type { ConfigConfig } from 'types/docker-compose.type'
+import { addNewNode } from 'store/project/project.store'
+import { string } from 'valibot'
 
 interface ConfigFormProps {
-  initialData?: Partial<ConfigConfig>;
-  onCancel?: () => void;
+  initialData?: Partial<ConfigConfig>
+  onCancel?: () => void
 }
 
 export const ConfigForm: React.FC<ConfigFormProps> = ({
@@ -12,123 +17,149 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
   onCancel,
 }) => {
   const [formData, setFormData] = useState<Partial<ConfigConfig>>({
-    file: "",
+    file: '',
     external: false,
     labels: {},
-    name: "",
-    content: "",
+    name: '',
+    content: '',
     ...initialData,
-  });
+  })
 
   const [labels, setLabels] = useState<{ key: string; value: string }[]>(
     Object.entries(formData.labels || {}).map(([key, value]) => ({
       key,
       value,
     }))
-  );
+  )
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const [configSource, setConfigSource] = useState<'file' | 'content'>(
     formData.file ? 'file' : 'content'
-  );
+  )
 
   const handleInputChange = (field: keyof ConfigConfig, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }));
-    
+    }))
+
     if (errors[field]) {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
     }
-  };
+  }
 
   const handleLabelsChange = (
     index: number,
-    field: "key" | "value",
+    field: 'key' | 'value',
     value: string
   ) => {
-    const updated = [...labels];
-    updated[index][field] = value;
-    setLabels(updated);
+    const updated = [...labels]
+    updated[index][field] = value
+    setLabels(updated)
 
     const labelsObject = updated.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
+      if (key) acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
 
-    handleInputChange("labels", labelsObject);
-  };
+    handleInputChange('labels', labelsObject)
+  }
 
   const addLabel = () => {
-    setLabels((prev) => [...prev, { key: "", value: "" }]);
-  };
+    setLabels((prev) => [...prev, { key: '', value: '' }])
+  }
 
   const removeLabel = (index: number) => {
-    setLabels((prev) => prev.filter((_, i) => i !== index));
-  };
+    setLabels((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleExternalChange = (value: boolean) => {
     if (value) {
-      handleInputChange("external", true);
+      handleInputChange('external', true)
     } else {
-      handleInputChange("external", false);
+      handleInputChange('external', false)
     }
-  };
+  }
 
   const handleExternalNameChange = (name: string) => {
-    handleInputChange("external", { name });
-  };
+    handleInputChange('external', { name })
+  }
 
   const handleConfigSourceChange = (source: 'file' | 'content') => {
-    setConfigSource(source);
+    setConfigSource(source)
     // Очищаем другое поле при смене источника
     if (source === 'file') {
-      handleInputChange("content", "");
+      handleInputChange('content', '')
     } else {
-      handleInputChange("file", "");
+      handleInputChange('file', '')
     }
-  };
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    // Подготавливаем данные для отправки
-    const submitData: Partial<ConfigConfig> = Object.fromEntries(
-      Object.entries(formData).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0;
-        if (typeof value === "object") return Object.keys(value || {}).length > 0;
-        if (typeof value === "boolean") return true;
-        return value !== "" && value !== undefined;
-      })
-    );
-
-    // Валидация
-    if (!submitData.name) {
-      setErrors({ name: "Config name is required" });
-      return;
+    const submitData: Partial<ConfigConfig> = {
+      ...formData,
+      labels:
+        Object.keys(formData.labels || {}).length > 0
+          ? formData.labels
+          : undefined,
+      external:
+        typeof formData.external === 'object' && formData.external?.name
+          ? formData.external
+          : formData.external === true
+          ? true
+          : undefined,
     }
 
-    // Проверяем что выбран хотя бы один источник конфига
+    // Объединенная проверка
+    const customErrors: Record<string, string> = {}
+
+    // Проверка на наличие file или content
     if (!submitData.file && !submitData.content) {
-      setErrors({ file: "Please select a config source (file or content)" });
-      return;
+      customErrors.file = 'Either file or content must be provided'
+      customErrors.content = 'Either file or content must be provided'
+    }
+
+    const result = validateConfigConfig(submitData)
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      for (const issue of result.issues) {
+        const key =
+          typeof issue.path?.[0] === 'string'
+            ? issue.path[0]
+            : issue.path?.[0]?.key
+
+        if (key) {
+          fieldErrors[key as string] = issue.message || 'Invalid value'
+        }
+      }
+      setErrors({ ...customErrors, ...fieldErrors })
+      return
+    }
+
+    // Если есть кастомные ошибки, показываем их и выходим
+    if (Object.keys(customErrors).length > 0) {
+      setErrors(customErrors)
+      return
     }
 
     // ✅ Успешная валидация
+    const validData = result.output as ValidatedConfigConfig
     addNewNode({
       id: String(Date.now()),
       position: { x: 0, y: 0 },
       type: 'config',
-      data: { ...submitData }
-    });
-    onCancel?.();
-  };
+      data: { ...validData },
+    })
+    onCancel?.()
+  }
 
   return (
     <form
@@ -142,13 +173,13 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
         </label>
         <input
           type="text"
-          value={formData.name || ""}
-          onChange={(e) => handleInputChange("name", e.target.value)}
+          value={formData.name || ''}
+          onChange={(e) => handleInputChange('name', e.target.value)}
           placeholder="my-config"
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.name
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500'
           }`}
         />
         {errors.name && (
@@ -176,13 +207,13 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
             <div className="ml-6">
               <input
                 type="text"
-                value={formData.file || ""}
-                onChange={(e) => handleInputChange("file", e.target.value)}
+                value={formData.file || ''}
+                onChange={(e) => handleInputChange('file', e.target.value)}
                 placeholder="/path/to/config/file"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.file
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               {errors.file && (
@@ -204,14 +235,14 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
           {configSource === 'content' && (
             <div className="ml-6">
               <textarea
-                value={formData.content || ""}
-                onChange={(e) => handleInputChange("content", e.target.value)}
+                value={formData.content || ''}
+                onChange={(e) => handleInputChange('content', e.target.value)}
                 placeholder="Enter config content directly..."
                 rows={6}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.content
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               {errors.content && (
@@ -232,7 +263,9 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
             <input
               type="radio"
               name="external"
-              checked={formData.external === false || formData.external === undefined}
+              checked={
+                formData.external === false || formData.external === undefined
+              }
               onChange={() => handleExternalChange(false)}
               className="mr-2"
             />
@@ -242,21 +275,31 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
             <input
               type="radio"
               name="external"
-              checked={formData.external === true || (typeof formData.external === 'object' && formData.external !== null)}
+              checked={
+                formData.external === true ||
+                (typeof formData.external === 'object' &&
+                  formData.external !== null)
+              }
               onChange={() => handleExternalChange(true)}
               className="mr-2"
             />
             External (pre-existing config)
           </label>
-          
-          {(formData.external === true || (typeof formData.external === 'object' && formData.external !== null)) && (
+
+          {(formData.external === true ||
+            (typeof formData.external === 'object' &&
+              formData.external !== null)) && (
             <div className="ml-6 mt-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 External Config Name
               </label>
               <input
                 type="text"
-                value={typeof formData.external === 'object' ? formData.external.name || '' : ''}
+                value={
+                  typeof formData.external === 'object'
+                    ? formData.external.name || ''
+                    : ''
+                }
                 onChange={(e) => handleExternalNameChange(e.target.value)}
                 placeholder="existing-config-name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -281,7 +324,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
                 type="text"
                 value={label.key}
                 onChange={(e) =>
-                  handleLabelsChange(index, "key", e.target.value)
+                  handleLabelsChange(index, 'key', e.target.value)
                 }
                 placeholder="label_name"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -290,7 +333,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
                 type="text"
                 value={label.value}
                 onChange={(e) =>
-                  handleLabelsChange(index, "value", e.target.value)
+                  handleLabelsChange(index, 'value', e.target.value)
                 }
                 placeholder="value"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -336,5 +379,5 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
         </button>
       </div>
     </form>
-  );
-};
+  )
+}

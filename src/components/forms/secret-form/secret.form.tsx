@@ -1,10 +1,14 @@
-import React, { useState } from "react";
-import type { SecretConfig } from "types/docker-compose.type";
-import { addNewNode } from "store/project/project.store";
+import React, { useState } from 'react'
+import {
+  validateSecretConfig,
+  ValidatedSecretConfig,
+} from 'schemas/dockerSecret.schema'
+import type { SecretConfig } from 'types/docker-compose.type'
+import { addNewNode } from 'store/project/project.store'
 
 interface SecretFormProps {
-  initialData?: Partial<SecretConfig>;
-  onCancel?: () => void;
+  initialData?: Partial<SecretConfig>
+  onCancel?: () => void
 }
 
 export const SecretForm: React.FC<SecretFormProps> = ({
@@ -12,129 +16,156 @@ export const SecretForm: React.FC<SecretFormProps> = ({
   onCancel,
 }) => {
   const [formData, setFormData] = useState<Partial<SecretConfig>>({
-    file: "",
+    file: '',
     external: false,
     labels: {},
-    name: "",
-    environment: "",
-    content: "",
+    name: '',
+    environment: '',
+    content: '',
     ...initialData,
-  });
+  })
 
   const [labels, setLabels] = useState<{ key: string; value: string }[]>(
     Object.entries(formData.labels || {}).map(([key, value]) => ({
       key,
       value,
     }))
-  );
+  )
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const [secretSource, setSecretSource] = useState<'file' | 'content' | 'environment'>(
-    formData.file ? 'file' : formData.content ? 'content' : formData.environment ? 'environment' : 'file'
-  );
+  const [secretSource, setSecretSource] = useState<
+    'file' | 'content' | 'environment'
+  >(
+    formData.file
+      ? 'file'
+      : formData.content
+      ? 'content'
+      : formData.environment
+      ? 'environment'
+      : 'file'
+  )
 
   const handleInputChange = (field: keyof SecretConfig, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }));
-    
+    }))
+
     if (errors[field]) {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
     }
-  };
+  }
 
   const handleLabelsChange = (
     index: number,
-    field: "key" | "value",
+    field: 'key' | 'value',
     value: string
   ) => {
-    const updated = [...labels];
-    updated[index][field] = value;
-    setLabels(updated);
+    const updated = [...labels]
+    updated[index][field] = value
+    setLabels(updated)
 
     const labelsObject = updated.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
+      if (key) acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
 
-    handleInputChange("labels", labelsObject);
-  };
+    handleInputChange('labels', labelsObject)
+  }
 
   const addLabel = () => {
-    setLabels((prev) => [...prev, { key: "", value: "" }]);
-  };
+    setLabels((prev) => [...prev, { key: '', value: '' }])
+  }
 
   const removeLabel = (index: number) => {
-    setLabels((prev) => prev.filter((_, i) => i !== index));
-  };
+    setLabels((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleExternalChange = (value: boolean) => {
     if (value) {
-      handleInputChange("external", true);
+      handleInputChange('external', true)
     } else {
-      handleInputChange("external", false);
+      handleInputChange('external', false)
     }
-  };
+  }
 
   const handleExternalNameChange = (name: string) => {
-    handleInputChange("external", { name });
-  };
+    handleInputChange('external', { name })
+  }
 
-  const handleSecretSourceChange = (source: 'file' | 'content' | 'environment') => {
-    setSecretSource(source);
+  const handleSecretSourceChange = (
+    source: 'file' | 'content' | 'environment'
+  ) => {
+    setSecretSource(source)
     // Очищаем другие поля при смене источника
     if (source === 'file') {
-      handleInputChange("content", "");
-      handleInputChange("environment", "");
+      handleInputChange('content', '')
+      handleInputChange('environment', '')
     } else if (source === 'content') {
-      handleInputChange("file", "");
-      handleInputChange("environment", "");
+      handleInputChange('file', '')
+      handleInputChange('environment', '')
     } else if (source === 'environment') {
-      handleInputChange("file", "");
-      handleInputChange("content", "");
+      handleInputChange('file', '')
+      handleInputChange('content', '')
     }
-  };
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    // Подготавливаем данные для отправки
-    const submitData: Partial<SecretConfig> = Object.fromEntries(
-      Object.entries(formData).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0;
-        if (typeof value === "object") return Object.keys(value || {}).length > 0;
-        if (typeof value === "boolean") return true;
-        return value !== "" && value !== undefined;
-      })
-    );
-
-    // Валидация
-    if (!submitData.name) {
-      setErrors({ name: "Secret name is required" });
-      return;
+    const submitData: Partial<SecretConfig> = {
+      ...formData,
+      labels:
+        Object.keys(formData.labels || {}).length > 0
+          ? formData.labels
+          : undefined,
+      external:
+        typeof formData.external === 'object' && formData.external?.name
+          ? formData.external
+          : formData.external === true
+          ? true
+          : undefined,
     }
 
-    // Проверяем что выбран хотя бы один источник секрета
-    if (!submitData.file && !submitData.content && !submitData.environment) {
-      setErrors({ file: "Please select a secret source (file, content, or environment)" });
-      return;
+    // Валидация через Valibot
+    const result = validateSecretConfig(submitData)
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      for (const issue of result.issues) {
+        const path = issue.path?.[0]?.key
+        if (typeof path === 'string') {
+          fieldErrors[path] = issue.message || 'Invalid value'
+        }
+      }
+      setErrors(fieldErrors)
+
+      if (!submitData.file && !submitData.content && !submitData.environment) {
+        setErrors({
+          ...fieldErrors,
+          file: 'Either file, content, or environment must be provided',
+          content: 'Either file, content, or environment must be provided',
+          environment: 'Either file, content, or environment must be provided',
+        })
+      }
+      return
     }
 
     // ✅ Успешная валидация
+    const validData = result.output as ValidatedSecretConfig
     addNewNode({
       id: String(Date.now()),
       position: { x: 0, y: 0 },
       type: 'secret',
-      data: { ...submitData }
-    });
-    onCancel?.();
-  };
+      data: { ...validData },
+    })
+    onCancel?.()
+  }
 
   return (
     <form
@@ -148,13 +179,13 @@ export const SecretForm: React.FC<SecretFormProps> = ({
         </label>
         <input
           type="text"
-          value={formData.name || ""}
-          onChange={(e) => handleInputChange("name", e.target.value)}
+          value={formData.name || ''}
+          onChange={(e) => handleInputChange('name', e.target.value)}
           placeholder="my-secret"
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.name
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500'
           }`}
         />
         {errors.name && (
@@ -182,13 +213,13 @@ export const SecretForm: React.FC<SecretFormProps> = ({
             <div className="ml-6">
               <input
                 type="text"
-                value={formData.file || ""}
-                onChange={(e) => handleInputChange("file", e.target.value)}
+                value={formData.file || ''}
+                onChange={(e) => handleInputChange('file', e.target.value)}
                 placeholder="/path/to/secret/file"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.file
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               {errors.file && (
@@ -210,14 +241,14 @@ export const SecretForm: React.FC<SecretFormProps> = ({
           {secretSource === 'content' && (
             <div className="ml-6">
               <input
-                value={formData.content || ""}
-                onChange={(e) => handleInputChange("content", e.target.value)}
+                value={formData.content || ''}
+                onChange={(e) => handleInputChange('content', e.target.value)}
                 placeholder="Enter secret content directly..."
                 type="password"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.content
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               {errors.content && (
@@ -240,21 +271,28 @@ export const SecretForm: React.FC<SecretFormProps> = ({
             <div className="ml-6">
               <input
                 type="text"
-                value={formData.environment || ""}
-                onChange={(e) => handleInputChange("environment", e.target.value)}
+                value={formData.environment || ''}
+                onChange={(e) =>
+                  handleInputChange('environment', e.target.value)
+                }
                 placeholder="ENV_VARIABLE_NAME"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.environment
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               {errors.environment && (
-                <p className="mt-1 text-sm text-red-600">{errors.environment}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.environment}
+                </p>
               )}
             </div>
           )}
         </div>
+        {errors.file && !errors.file.includes('Either') && (
+          <p className="mt-1 text-sm text-red-600">{errors.file}</p>
+        )}
       </div>
 
       {/* External */}
@@ -267,7 +305,9 @@ export const SecretForm: React.FC<SecretFormProps> = ({
             <input
               type="radio"
               name="external"
-              checked={formData.external === false || formData.external === undefined}
+              checked={
+                formData.external === false || formData.external === undefined
+              }
               onChange={() => handleExternalChange(false)}
               className="mr-2"
             />
@@ -277,21 +317,31 @@ export const SecretForm: React.FC<SecretFormProps> = ({
             <input
               type="radio"
               name="external"
-              checked={formData.external === true || (typeof formData.external === 'object' && formData.external !== null)}
+              checked={
+                formData.external === true ||
+                (typeof formData.external === 'object' &&
+                  formData.external !== null)
+              }
               onChange={() => handleExternalChange(true)}
               className="mr-2"
             />
             External (pre-existing secret)
           </label>
-          
-          {(formData.external === true || (typeof formData.external === 'object' && formData.external !== null)) && (
+
+          {(formData.external === true ||
+            (typeof formData.external === 'object' &&
+              formData.external !== null)) && (
             <div className="ml-6 mt-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 External Secret Name
               </label>
               <input
                 type="text"
-                value={typeof formData.external === 'object' ? formData.external.name || '' : ''}
+                value={
+                  typeof formData.external === 'object'
+                    ? formData.external.name || ''
+                    : ''
+                }
                 onChange={(e) => handleExternalNameChange(e.target.value)}
                 placeholder="existing-secret-name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -316,7 +366,7 @@ export const SecretForm: React.FC<SecretFormProps> = ({
                 type="text"
                 value={label.key}
                 onChange={(e) =>
-                  handleLabelsChange(index, "key", e.target.value)
+                  handleLabelsChange(index, 'key', e.target.value)
                 }
                 placeholder="label_name"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -325,7 +375,7 @@ export const SecretForm: React.FC<SecretFormProps> = ({
                 type="text"
                 value={label.value}
                 onChange={(e) =>
-                  handleLabelsChange(index, "value", e.target.value)
+                  handleLabelsChange(index, 'value', e.target.value)
                 }
                 placeholder="value"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -371,5 +421,5 @@ export const SecretForm: React.FC<SecretFormProps> = ({
         </button>
       </div>
     </form>
-  );
-};
+  )
+}

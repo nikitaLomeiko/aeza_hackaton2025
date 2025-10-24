@@ -29,7 +29,7 @@ const RestartPolicySchema = union([
 // Схема для ServiceConfig (только обязательные и валидируемые поля)
 export const ServiceConfigSchema = object({
   image: string(), // обязательно
-  container_name: pipe(string(), minLength(5)),
+  container_name: pipe(string(), minLength(1)),
   ports: optional(array(PortMappingSchema)),
   environment: optional(record(string(), string())),
   restart: optional(RestartPolicySchema),
