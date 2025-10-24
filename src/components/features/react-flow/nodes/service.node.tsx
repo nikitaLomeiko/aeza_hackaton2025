@@ -1,11 +1,11 @@
-import { Handle, Node, Position } from "@xyflow/react";
+import { Node } from "@xyflow/react";
 import { NodeProps } from "@xyflow/system";
 import { ServiceConfig } from "types/docker-compose.type";
 import { NodeWrapper } from "../components/node.wrapper";
 
 export type TypeServiceConfig = Node<ServiceConfig, "service">;
 
-const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => {
+export const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => {
   const renderEnvironment = () => {
     if (!data.environment) return null;
 
@@ -43,8 +43,6 @@ const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => {
 
   return (
     <NodeWrapper onDelete={() => console.log('sdg')}>
-      <Handle type="target" position={Position.Top} />
-
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
@@ -145,12 +143,6 @@ const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => {
           )}
         </div>
       </div>
-
-      <Handle type="source" position={Position.Bottom} />
     </NodeWrapper>
   );
-};
-
-export const serviceNodeTypes = {
-  service: CustomNode,
 };
