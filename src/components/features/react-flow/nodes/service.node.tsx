@@ -3,7 +3,9 @@ import { NodeProps } from '@xyflow/system'
 import { ServiceConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
 import { useUnit } from 'effector-react'
-import { deleteNode } from 'store/project/project.store'
+import { $project, deleteNode } from 'store/project/project.store'
+import { ServiceForm } from 'components/forms/service-form'
+import { useState } from 'react'
 
 export type TypeServiceConfig = Node<ServiceConfig, 'service'>
 
@@ -12,6 +14,18 @@ export const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({
   id,
 }) => {
   const deleteNodeFn = useUnit(deleteNode)
+
+  const projectState = useUnit($project)
+
+  const [viewForm, setView] = useState(false)
+
+  const currentProject = projectState.projects.find(
+    (item) => item.id === projectState.currentId
+  )
+
+  const currentNode = (currentProject?.nodes || []).find(
+    (item) => item.id === id
+  )
 
   const handleDelete = () => {
     deleteNodeFn(id)
@@ -296,7 +310,21 @@ export const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({
   }
 
   return (
-    <NodeWrapper typeHandle="source" onDelete={handleDelete} nodeId={id}>
+    <NodeWrapper
+      showForm={() => setView(true)}
+      viewForm={viewForm}
+      form={
+        <ServiceForm
+          isEdit
+          currentNode={currentNode}
+          initialData={data}
+          onCancel={() => setView(false)}
+        />
+      }
+      typeHandle="source"
+      onDelete={handleDelete}
+      nodeId={id}
+    >
       <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200 p-6 min-w-80 max-w-md backdrop-blur-sm">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">

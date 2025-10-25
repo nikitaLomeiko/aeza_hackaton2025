@@ -1,9 +1,10 @@
 import { Node, NodeProps } from '@xyflow/react'
-import React from 'react'
+import React, { useState } from 'react'
 import type { VolumeConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
-import { deleteNode } from 'store/project/project.store'
+import { $project, deleteNode } from 'store/project/project.store'
 import { useUnit } from 'effector-react'
+import { VolumeForm } from 'components/forms/volume-form'
 
 export type TypeVolumeConfig = Node<VolumeConfig, 'volume'>
 
@@ -12,6 +13,18 @@ export const VolumeInfo: React.FC<NodeProps<TypeVolumeConfig>> = ({
   id,
 }) => {
   const deleteNodeFn = useUnit(deleteNode)
+
+  const projectState = useUnit($project)
+
+  const [viewForm, setView] = useState(false)
+
+  const currentProject = projectState.projects.find(
+    (item) => item.id === projectState.currentId
+  )
+
+  const currentNode = (currentProject?.nodes || []).find(
+    (item) => item.id === id
+  )
 
   const handleDelete = () => {
     deleteNodeFn(id)
@@ -197,7 +210,21 @@ export const VolumeInfo: React.FC<NodeProps<TypeVolumeConfig>> = ({
   }
 
   return (
-    <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
+    <NodeWrapper
+      showForm={() => setView(true)}
+      viewForm={viewForm}
+      form={
+        <VolumeForm
+          isEdit
+          currentNode={currentNode}
+          initialData={data}
+          onCancel={() => setView(false)}
+        />
+      }
+      typeHandle="target"
+      onDelete={handleDelete}
+      nodeId={id}
+    >
       <div className="space-y-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
         {/* Header */}
         <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">

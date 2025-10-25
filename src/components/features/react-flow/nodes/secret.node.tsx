@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { SecretConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
 import { Node } from '@xyflow/react'
 import { NodeProps } from '@xyflow/system'
 import { useUnit } from 'effector-react'
-import { deleteNode } from 'store/project/project.store'
+import { $project, deleteNode } from 'store/project/project.store'
+import { SecretForm } from 'components/forms/secret-form'
 
 export type TypeServiceConfig = Node<SecretConfig, 'service'>
 
@@ -13,6 +14,18 @@ export const SecretInfo: React.FC<NodeProps<TypeServiceConfig>> = ({
   id,
 }) => {
   const deleteNodeFn = useUnit(deleteNode)
+
+  const projectState = useUnit($project)
+
+  const [viewForm, setView] = useState(false)
+
+  const currentProject = projectState.projects.find(
+    (item) => item.id === projectState.currentId
+  )
+
+  const currentNode = (currentProject?.nodes || []).find(
+    (item) => item.id === id
+  )
 
   const handleDelete = () => {
     deleteNodeFn(id)
@@ -251,7 +264,21 @@ export const SecretInfo: React.FC<NodeProps<TypeServiceConfig>> = ({
   }
 
   return (
-    <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
+    <NodeWrapper
+      showForm={() => setView(true)}
+      viewForm={viewForm}
+      form={
+        <SecretForm
+          isEdit
+          currentNode={currentNode}
+          initialData={data}
+          onCancel={() => setView(false)}
+        />
+      }
+      typeHandle="target"
+      onDelete={handleDelete}
+      nodeId={id}
+    >
       <div className="space-y-6 bg-gradient-to-br from-white to-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
         {/* Header */}
         <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">

@@ -4,16 +4,24 @@ import {
   ValidatedVolumeConfig,
 } from 'schemas/dockerVolume.schema'
 import type { VolumeConfig } from 'types/docker-compose.type'
-import { addNewNode } from 'store/project/project.store'
+import {
+  addNewNode,
+  changeNodeByCurrentProject,
+} from 'store/project/project.store'
+import { Node } from '@xyflow/react'
 
 interface VolumeFormProps {
   initialData?: Partial<VolumeConfig>
   onCancel?: () => void
+  isEdit?: boolean
+  currentNode?: Node
 }
 
 export const VolumeForm: React.FC<VolumeFormProps> = ({
   initialData = {},
   onCancel,
+  currentNode,
+  isEdit = false,
 }) => {
   const [formData, setFormData] = useState<Partial<VolumeConfig>>({
     driver: '',
@@ -160,12 +168,19 @@ export const VolumeForm: React.FC<VolumeFormProps> = ({
 
     // ✅ Успешная валидация
     const validData = result.output as ValidatedVolumeConfig
-    addNewNode({
-      id: String(Date.now()),
-      position: { x: 0, y: 0 },
-      type: 'volume',
-      data: { ...validData },
-    })
+    if (!isEdit)
+      addNewNode({
+        id: String(Date.now()),
+        position: { x: 0, y: 0 },
+        type: 'volume',
+        data: { ...validData },
+      })
+    else {
+      changeNodeByCurrentProject({
+        id: currentNode?.id || '',
+        node: { ...currentNode, data: { ...validData } } as Node,
+      })
+    }
     onCancel?.()
   }
 

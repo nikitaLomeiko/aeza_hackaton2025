@@ -4,17 +4,24 @@ import {
   ValidatedConfigConfig,
 } from 'schemas/dockerConfig.schema'
 import type { ConfigConfig } from 'types/docker-compose.type'
-import { addNewNode } from 'store/project/project.store'
-import { string } from 'valibot'
+import {
+  addNewNode,
+  changeNodeByCurrentProject,
+} from 'store/project/project.store'
+import { Node } from '@xyflow/react'
 
 interface ConfigFormProps {
   initialData?: Partial<ConfigConfig>
   onCancel?: () => void
+  isEdit?: boolean
+  currentNode?: Node
 }
 
 export const ConfigForm: React.FC<ConfigFormProps> = ({
   initialData = {},
   onCancel,
+  currentNode,
+  isEdit = false,
 }) => {
   const [formData, setFormData] = useState<Partial<ConfigConfig>>({
     file: '',
@@ -152,12 +159,20 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
 
     // ✅ Успешная валидация
     const validData = result.output as ValidatedConfigConfig
-    addNewNode({
-      id: String(Date.now()),
-      position: { x: 0, y: 0 },
-      type: 'config',
-      data: { ...validData },
-    })
+
+    if (!isEdit)
+      addNewNode({
+        id: String(Date.now()),
+        position: { x: 0, y: 0 },
+        type: 'config',
+        data: { ...validData },
+      })
+    else {
+      changeNodeByCurrentProject({
+        id: currentNode?.id || '',
+        node: { ...currentNode, data: { ...validData } } as Node,
+      })
+    }
     onCancel?.()
   }
 

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { GitHubLoginModal } from 'components/features/react-flow/components/GitHubLoginModal'
 
 function App() {
-  const [isVisibeLogin, setIsViisbleLogin] = useState(true)
+  const [isVisibeLogin, setIsViisbleLogin] = useState(false)
 
   return (
     <Layout>

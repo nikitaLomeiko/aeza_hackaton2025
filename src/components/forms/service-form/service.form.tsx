@@ -1,32 +1,40 @@
-import React, { useState } from "react";
+import React, { useState } from 'react'
 import {
   validateServiceConfig,
   ValidatedServiceConfig,
-} from "schemas/dockerService.schema";
-import type { PortMapping, ServiceConfig } from "types/docker-compose.type";
-import { addNewNode } from "store/project/project.store";
+} from 'schemas/dockerService.schema'
+import type { PortMapping, ServiceConfig } from 'types/docker-compose.type'
+import {
+  addNewNode,
+  changeNodeByCurrentProject,
+} from 'store/project/project.store'
+import { Node } from '@xyflow/react'
 
 interface ServiceFormProps {
-  initialData?: Partial<ServiceConfig>;
-  onCancel?: () => void;
+  initialData?: Partial<ServiceConfig>
+  onCancel?: () => void
+  isEdit?: boolean
+  currentNode?: Node
 }
 
 export const ServiceForm: React.FC<ServiceFormProps> = ({
   initialData = {},
   onCancel,
+  isEdit = false,
+  currentNode,
 }) => {
   const [formData, setFormData] = useState<Partial<ServiceConfig>>({
-    image: "",
-    container_name: "",
+    image: '',
+    container_name: '',
     ports: [],
     environment: {},
-    restart: "unless-stopped",
-    command: "",
-    entrypoint: "",
-    user: "",
-    working_dir: "",
+    restart: 'unless-stopped',
+    command: '',
+    entrypoint: '',
+    user: '',
+    working_dir: '',
     ...initialData,
-  });
+  })
 
   const [environmentVars, setEnvironmentVars] = useState<
     { key: string; value: string }[]
@@ -35,108 +43,121 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
       key,
       value,
     }))
-  );
+  )
 
   const [ports, setPorts] = useState<PortMapping[]>(
     Array.isArray(formData.ports) ? formData.ports : []
-  );
+  )
 
   // 👇 Новое: состояние ошибок
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleInputChange = (field: keyof ServiceConfig, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }));
+    }))
     // Очищаем ошибку при изменении поля
     if (errors[field]) {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
     }
-  };
+  }
 
   const handleEnvironmentChange = (
     index: number,
-    field: "key" | "value",
+    field: 'key' | 'value',
     value: string
   ) => {
-    const updated = [...environmentVars];
-    updated[index][field] = value;
-    setEnvironmentVars(updated);
+    const updated = [...environmentVars]
+    updated[index][field] = value
+    setEnvironmentVars(updated)
 
     const envObject = updated.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
+      if (key) acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
 
-    handleInputChange("environment", envObject);
-  };
+    handleInputChange('environment', envObject)
+  }
 
   const addEnvironmentVar = () => {
-    setEnvironmentVars((prev) => [...prev, { key: "", value: "" }]);
-  };
+    setEnvironmentVars((prev) => [...prev, { key: '', value: '' }])
+  }
 
   const removeEnvironmentVar = (index: number) => {
-    setEnvironmentVars((prev) => prev.filter((_, i) => i !== index));
-  };
+    setEnvironmentVars((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handlePortChange = (index: number, value: string) => {
-    const updated = [...ports];
-    updated[index] = value;
-    setPorts(updated);
+    const updated = [...ports]
+    updated[index] = value
+    setPorts(updated)
     handleInputChange(
-      "ports",
+      'ports',
       updated.filter((p) => p)
-    );
-  };
+    )
+  }
 
   const addPort = () => {
-    setPorts((prev) => [...prev, ""]);
-  };
+    setPorts((prev) => [...prev, ''])
+  }
 
   const removePort = (index: number) => {
-    setPorts((prev) => prev.filter((_, i) => i !== index));
-  };
+    setPorts((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     // Подготавливаем данные как раньше
     const submitData: Partial<ServiceConfig> = Object.fromEntries(
       Object.entries(formData).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0;
-        if (typeof value === "object")
-          return Object.keys(value || {}).length > 0;
-        return value !== "" && value !== undefined;
+        if (Array.isArray(value)) return value.length > 0
+        if (typeof value === 'object')
+          return Object.keys(value || {}).length > 0
+        return value !== '' && value !== undefined
       })
-    );
+    )
 
     // 🔍 Валидация через Valibot
-    const result = validateServiceConfig(submitData);
+    const result = validateServiceConfig(submitData)
 
     if (!result.success) {
       // Преобразуем ошибки Valibot в объект { fieldName: message }
-      const fieldErrors: Record<string, string> = {};
+      const fieldErrors: Record<string, string> = {}
       for (const issue of result.issues) {
         // Valibot использует путь вида ['image'], ['ports', 0] и т.д.
-        const path = issue.path?.[0]?.key;
-        if (typeof path === "string") {
-          fieldErrors[path] = issue.message || "Invalid value";
+        const path = issue.path?.[0]?.key
+        if (typeof path === 'string') {
+          fieldErrors[path] = issue.message || 'Invalid value'
         }
       }
-      setErrors(fieldErrors);
-      return;
+      setErrors(fieldErrors)
+      return
     }
 
     // ✅ Успешная валидация
-    const validData = result.output as ValidatedServiceConfig;
-    addNewNode({id: String(Date.now()), position: {x: 0, y: 0}, type: 'service', data: {...validData}});
-    onCancel?.();
-  };
+    const validData = result.output as ValidatedServiceConfig
+
+    if (!isEdit)
+      addNewNode({
+        id: String(Date.now()),
+        position: { x: 0, y: 0 },
+        type: 'service',
+        data: { ...validData },
+      })
+    else {
+      changeNodeByCurrentProject({
+        id: currentNode?.id || '',
+        node: { ...currentNode, data: { ...validData } } as Node,
+      })
+    }
+    onCancel?.()
+  }
 
   return (
     <form
@@ -150,13 +171,13 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         </label>
         <input
           type="text"
-          value={formData.image || ""}
-          onChange={(e) => handleInputChange("image", e.target.value)}
+          value={formData.image || ''}
+          onChange={(e) => handleInputChange('image', e.target.value)}
           placeholder="nginx:alpine"
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.image
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500'
           }`}
         />
         {errors.image && (
@@ -171,13 +192,13 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         </label>
         <input
           type="text"
-          value={formData.container_name || ""}
-          onChange={(e) => handleInputChange("container_name", e.target.value)}
+          value={formData.container_name || ''}
+          onChange={(e) => handleInputChange('container_name', e.target.value)}
           placeholder="my-container"
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.container_name
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500'
           }`}
         />
         {errors.container_name && (
@@ -200,8 +221,8 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
                 placeholder="8080:80"
                 className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
                   errors.ports
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
               />
               <button
@@ -238,7 +259,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
                 type="text"
                 value={env.key}
                 onChange={(e) =>
-                  handleEnvironmentChange(index, "key", e.target.value)
+                  handleEnvironmentChange(index, 'key', e.target.value)
                 }
                 placeholder="VARIABLE_NAME"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -247,7 +268,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
                 type="text"
                 value={env.value}
                 onChange={(e) =>
-                  handleEnvironmentChange(index, "value", e.target.value)
+                  handleEnvironmentChange(index, 'value', e.target.value)
                 }
                 placeholder="value"
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -280,12 +301,12 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
           Restart Policy
         </label>
         <select
-          value={formData.restart || "unless-stopped"}
-          onChange={(e) => handleInputChange("restart", e.target.value)}
+          value={formData.restart || 'unless-stopped'}
+          onChange={(e) => handleInputChange('restart', e.target.value)}
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
             errors.restart
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500'
           }`}
         >
           <option value="no">No</option>
@@ -307,11 +328,11 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
           type="text"
           value={
             Array.isArray(formData.command)
-              ? formData.command.join(" ")
-              : formData.command || ""
+              ? formData.command.join(' ')
+              : formData.command || ''
           }
           onChange={(e) =>
-            handleInputChange("command", e.target.value.split(" "))
+            handleInputChange('command', e.target.value.split(' '))
           }
           placeholder="npm start"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -330,11 +351,11 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
           type="text"
           value={
             Array.isArray(formData.entrypoint)
-              ? formData.entrypoint.join(" ")
-              : formData.entrypoint || ""
+              ? formData.entrypoint.join(' ')
+              : formData.entrypoint || ''
           }
           onChange={(e) =>
-            handleInputChange("entrypoint", e.target.value.split(" "))
+            handleInputChange('entrypoint', e.target.value.split(' '))
           }
           placeholder="/bin/sh -c"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -351,8 +372,8 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         </label>
         <input
           type="text"
-          value={formData.user || ""}
-          onChange={(e) => handleInputChange("user", e.target.value)}
+          value={formData.user || ''}
+          onChange={(e) => handleInputChange('user', e.target.value)}
           placeholder="root"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -368,8 +389,8 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         </label>
         <input
           type="text"
-          value={formData.working_dir || ""}
-          onChange={(e) => handleInputChange("working_dir", e.target.value)}
+          value={formData.working_dir || ''}
+          onChange={(e) => handleInputChange('working_dir', e.target.value)}
           placeholder="/app"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -397,5 +418,5 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         </button>
       </div>
     </form>
-  );
-};
+  )
+}

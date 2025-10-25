@@ -4,16 +4,24 @@ import {
   ValidatedNetworkConfig,
 } from 'schemas/dockerNetwork.schema'
 import type { NetworkConfig } from 'types/docker-compose.type'
-import { addNewNode } from 'store/project/project.store'
+import {
+  addNewNode,
+  changeNodeByCurrentProject,
+} from 'store/project/project.store'
+import { Node } from '@xyflow/react'
 
 interface NetworkFormProps {
   initialData?: Partial<NetworkConfig>
   onCancel?: () => void
+  isEdit?: boolean
+  currentNode?: Node
 }
 
 export const NetworkForm: React.FC<NetworkFormProps> = ({
   initialData = {},
   onCancel,
+  currentNode,
+  isEdit = false,
 }) => {
   const [formData, setFormData] = useState<Partial<NetworkConfig>>({
     driver: 'bridge',
@@ -220,12 +228,20 @@ export const NetworkForm: React.FC<NetworkFormProps> = ({
 
     // ✅ Успешная валидация
     const validData = result.output as ValidatedNetworkConfig
-    addNewNode({
-      id: String(Date.now()),
-      position: { x: 0, y: 0 },
-      type: 'network',
-      data: { ...validData },
-    })
+
+    if (!isEdit)
+      addNewNode({
+        id: String(Date.now()),
+        position: { x: 0, y: 0 },
+        type: 'network',
+        data: { ...validData },
+      })
+    else {
+      changeNodeByCurrentProject({
+        id: currentNode?.id || '',
+        node: { ...currentNode, data: { ...validData } } as Node,
+      })
+    }
     onCancel?.()
   }
 

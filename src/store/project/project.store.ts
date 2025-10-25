@@ -24,6 +24,10 @@ export const updateProject = createEvent<IProject>()
 export const selectProject = createEvent<string>()
 
 export const addNewNode = createEvent<Node>()
+export const changeNode = createEvent<{
+  node: Node
+  id: string
+}>()
 export const setNodesByCurrentProject = createEvent<Node[]>()
 export const changeNodeByCurrentProject = createEvent<{
   node: Node
@@ -102,6 +106,7 @@ export const $project = createStore<IProjectState>(loadFromStorage())
           }
         : prj
     )
+
     saveToStorage(updatedProjects)
     return { ...project, projects: updatedProjects }
   })

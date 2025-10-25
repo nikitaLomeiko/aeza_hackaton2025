@@ -4,16 +4,24 @@ import {
   ValidatedSecretConfig,
 } from 'schemas/dockerSecret.schema'
 import type { SecretConfig } from 'types/docker-compose.type'
-import { addNewNode } from 'store/project/project.store'
+import {
+  addNewNode,
+  changeNodeByCurrentProject,
+} from 'store/project/project.store'
+import { Node } from '@xyflow/react'
 
 interface SecretFormProps {
   initialData?: Partial<SecretConfig>
   onCancel?: () => void
+  isEdit?: boolean
+  currentNode?: Node
 }
 
 export const SecretForm: React.FC<SecretFormProps> = ({
   initialData = {},
   onCancel,
+  currentNode,
+  isEdit = false,
 }) => {
   const [formData, setFormData] = useState<Partial<SecretConfig>>({
     file: '',
@@ -158,12 +166,19 @@ export const SecretForm: React.FC<SecretFormProps> = ({
 
     // ✅ Успешная валидация
     const validData = result.output as ValidatedSecretConfig
-    addNewNode({
-      id: String(Date.now()),
-      position: { x: 0, y: 0 },
-      type: 'secret',
-      data: { ...validData },
-    })
+
+    if (!isEdit)
+      addNewNode({
+        id: String(Date.now()),
+        position: { x: 0, y: 0 },
+        type: 'secret',
+        data: { ...validData },
+      })
+    else
+      changeNodeByCurrentProject({
+        id: currentNode?.id || '',
+        node: { ...currentNode, data: { ...validData } } as Node,
+      })
     onCancel?.()
   }
 
