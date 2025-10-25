@@ -12,11 +12,16 @@ import {
   Node,
   NodeChange,
   BackgroundVariant,
+  ReactFlowProvider,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { $project, setEdgesByCurrentProject, setNodesByCurrentProject } from 'store/project'
+import {
+  $project,
+  setEdgesByCurrentProject,
+  setNodesByCurrentProject,
+} from 'store/project'
 import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
 import { debounce } from 'lodash'
@@ -29,10 +34,10 @@ const customNode = {
   service: CustomNode,
   network: NetworkNode,
   secret: SecretInfo,
-  config: ConfigInfo
+  config: ConfigInfo,
 }
 
-export const CustomReactFlow = () => {
+const FlowContent = () => {
   const projectState = useUnit($project)
 
   const currentProject = projectState.projects.find(
@@ -64,33 +69,30 @@ export const CustomReactFlow = () => {
 
   const debouncedSetNodes = useMemo(
     () =>
-      debounce((nodes: Node[]) => {
-        setNodesByCurrentProject(nodes)
+      debounce((nodesToSave: Node[]) => {
+        setNodesByCurrentProject(nodesToSave)
       }, 200),
     []
   )
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot))
-      debouncedSetNodes(nodes)
+      setNodes((nds) => {
+        const newNodes = applyNodeChanges(changes, nds)
+        debouncedSetNodes(newNodes)
+        return newNodes
+      })
     },
-    [nodes]
+    [debouncedSetNodes]
   )
 
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => {
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot))
-    },
-    []
-  )
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds))
+  }, [])
 
-  const onConnect = useCallback(
-    (params: Connection | Edge) => {
-      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
-    },
-    []
-  )
+  const onConnect = useCallback((params: Connection | Edge) => {
+    setEdges((eds) => addEdge(params, eds))
+  }, [])
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -109,5 +111,13 @@ export const CustomReactFlow = () => {
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
     </div>
+  )
+}
+
+export const CustomReactFlow = () => {
+  return (
+    <ReactFlowProvider>
+      <FlowContent />
+    </ReactFlowProvider>
   )
 }

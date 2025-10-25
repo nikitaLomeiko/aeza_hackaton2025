@@ -25,7 +25,7 @@ export const selectProject = createEvent<string>()
 
 export const addNewNode = createEvent<Node>()
 export const setNodesByCurrentProject = createEvent<Node[]>()
-
+export const deleteNode = createEvent<string>() // Новое событие для удаления ноды
 export const setEdgesByCurrentProject = createEvent<Edge[]>()
 
 // Стор
@@ -55,6 +55,22 @@ export const $project = createStore<IProjectState>(loadFromStorage())
         ? {
             ...prj,
             nodes: [...(prj.nodes || []), node],
+          }
+        : prj
+    )
+    saveToStorage(updatedProjects)
+    return { ...project, projects: updatedProjects }
+  })
+  .on(deleteNode, (project, nodeId) => {
+    // Обработчик удаления ноды
+    const updatedProjects = project.projects.map((prj) =>
+      prj.id === project.currentId
+        ? {
+            ...prj,
+            nodes: (prj.nodes || []).filter((node) => node.id !== nodeId),
+            edges: (prj.edges || []).filter(
+              (edge) => edge.source !== nodeId && edge.target !== nodeId
+            ),
           }
         : prj
     )

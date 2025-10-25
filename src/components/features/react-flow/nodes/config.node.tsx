@@ -2,10 +2,21 @@ import React from 'react'
 import type { ConfigConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
 import { Node, NodeProps } from '@xyflow/react'
+import { useUnit } from 'effector-react'
+import { deleteNode } from 'store/project/project.store'
 
 export type TypeConfigkConfig = Node<ConfigConfig, 'config'>
 
-export const ConfigInfo: React.FC<NodeProps<TypeConfigkConfig>> = ({ data }) => {
+export const ConfigInfo: React.FC<NodeProps<TypeConfigkConfig>> = ({
+  data,
+  id,
+}) => {
+  const deleteNodeFn = useUnit(deleteNode)
+
+  const handleDelete = () => {
+    deleteNodeFn(id)
+  }
+
   const renderObjectAsList = (obj: Record<string, string> | undefined) => {
     if (!obj || Object.keys(obj).length === 0) {
       return <span className="text-gray-500">None</span>
@@ -73,7 +84,7 @@ export const ConfigInfo: React.FC<NodeProps<TypeConfigkConfig>> = ({ data }) => 
   }
 
   return (
-    <NodeWrapper typeHandle='target' onDelete={() => console.log('Delete network')}>
+    <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
       <div className="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex justify-between items-start">
