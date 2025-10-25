@@ -2,12 +2,21 @@ import { Node } from '@xyflow/react'
 import { NodeProps } from '@xyflow/system'
 import { ServiceConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
+import { useUnit } from 'effector-react'
+import { deleteNode } from 'store/project/project.store'
 
 export type TypeServiceConfig = Node<ServiceConfig, 'service'>
 
 export const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({
   data,
+  id,
 }) => {
+  const deleteNodeFn = useUnit(deleteNode)
+
+  const handleDelete = () => {
+    deleteNodeFn(id)
+  }
+
   const renderEnvironment = () => {
     if (!data.environment) return null
 
@@ -48,7 +57,7 @@ export const CustomNode: React.FC<NodeProps<TypeServiceConfig>> = ({
   }
 
   return (
-    <NodeWrapper typeHandle="source" onDelete={() => console.log('sdg')}>
+    <NodeWrapper typeHandle="source" onDelete={handleDelete} nodeId={id}>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">

@@ -16,7 +16,14 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useUnit } from 'effector-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {
   $project,
   changeNodeByCurrentProject,
@@ -32,6 +39,7 @@ import { ConfigInfo } from './nodes/config.node'
 import { Toolbar } from './components/toolbar'
 import { Modal } from 'components/ui/modal'
 import { PathForm } from 'components/forms/path-form'
+import { deleteNode } from 'store/project/project.store'
 
 const customNode = {
   volume: VolumeInfo,
@@ -43,6 +51,9 @@ const customNode = {
 
 export const CustomReactFlow = () => {
   const projectState = useUnit($project)
+  const deleteNodeFn = useUnit(deleteNode)
+
+  const kon = useRef<null | HTMLDivElement>(null)
 
   const currentProject = projectState.projects.find(
     (item) => item.id === projectState.currentId
@@ -103,10 +114,26 @@ export const CustomReactFlow = () => {
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
+      if (kon.current) {
+        // @ts-ignore
+        kon.current?.onclick()
+      }
+      // Проверяем, есть ли изменения удаления
+      const removeChanges = changes.filter((change) => change.type === 'remove')
+
+      if (removeChanges.length > 0) {
+        // Для удаления - немедленно вызываем deleteNode для каждой ноды
+        removeChanges.forEach((change) => {
+          if (change.type === 'remove' && change.id) {
+            deleteNodeFn(change.id)
+          }
+        })
+      }
+
       setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot))
       debouncedSetNodes(nodes)
     },
-    [nodes]
+    [nodes, deleteNodeFn]
   )
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
@@ -141,6 +168,7 @@ export const CustomReactFlow = () => {
         <>
           <span>{currentProject?.name}</span>
           <ReactFlow
+            ref={kon}
             minZoom={0.1}
             nodes={nodes}
             edges={edges}

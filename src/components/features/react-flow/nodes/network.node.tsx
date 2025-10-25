@@ -2,12 +2,21 @@ import { Node } from '@xyflow/react'
 import { NodeProps } from '@xyflow/system'
 import { NetworkConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
+import { useUnit } from 'effector-react'
+import { deleteNode } from 'store/project/project.store'
 
 export type TypeNetworkConfig = Node<NetworkConfig, 'network'>
 
 export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
   data,
+  id,
 }) => {
+  const deleteNodeFn = useUnit(deleteNode)
+
+  const handleDelete = () => {
+    deleteNodeFn(id)
+  }
+
   const renderDriverOptions = () => {
     console.log(data)
     if (!data.driver_opts || Object.keys(data.driver_opts).length === 0)
@@ -208,10 +217,7 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
   }
 
   return (
-    <NodeWrapper
-      typeHandle="target"
-      onDelete={() => console.log('Delete network')}
-    >
+    <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">

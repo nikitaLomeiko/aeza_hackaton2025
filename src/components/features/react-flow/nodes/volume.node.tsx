@@ -2,10 +2,21 @@ import { Node, NodeProps } from '@xyflow/react'
 import React from 'react'
 import type { VolumeConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
+import { deleteNode } from 'store/project/project.store'
+import { useUnit } from 'effector-react'
 
 export type TypeVolumeConfig = Node<VolumeConfig, 'volume'>
 
-export const VolumeInfo: React.FC<NodeProps<TypeVolumeConfig>> = ({ data }) => {
+export const VolumeInfo: React.FC<NodeProps<TypeVolumeConfig>> = ({
+  data,
+  id,
+}) => {
+  const deleteNodeFn = useUnit(deleteNode)
+
+  const handleDelete = () => {
+    deleteNodeFn(id)
+  }
+
   const renderObjectAsList = (obj: Record<string, string> | undefined) => {
     if (!obj || Object.keys(obj).length === 0) {
       return <span className="text-gray-500">None</span>
@@ -44,7 +55,7 @@ export const VolumeInfo: React.FC<NodeProps<TypeVolumeConfig>> = ({ data }) => {
   }
 
   return (
-    <NodeWrapper typeHandle='target' onDelete={() => console.log('sdg')}>
+    <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
       <div className="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -149,4 +160,4 @@ export const VolumeInfo: React.FC<NodeProps<TypeVolumeConfig>> = ({ data }) => {
       </div>
     </NodeWrapper>
   )
-};
+}

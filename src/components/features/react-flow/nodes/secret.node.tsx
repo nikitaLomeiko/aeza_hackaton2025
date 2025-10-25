@@ -1,13 +1,23 @@
 import React from 'react'
 import type { SecretConfig } from 'types/docker-compose.type'
 import { NodeWrapper } from '../components/node.wrapper'
-import { Node } from '@xyflow/react';
-import { NodeProps } from '@xyflow/system';
+import { Node } from '@xyflow/react'
+import { NodeProps } from '@xyflow/system'
+import { useUnit } from 'effector-react'
+import { deleteNode } from 'store/project/project.store'
 
-export type TypeServiceConfig = Node<SecretConfig, "service">;
+export type TypeServiceConfig = Node<SecretConfig, 'service'>
 
+export const SecretInfo: React.FC<NodeProps<TypeServiceConfig>> = ({
+  data,
+  id,
+}) => {
+  const deleteNodeFn = useUnit(deleteNode)
 
-export const SecretInfo: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => {
+  const handleDelete = () => {
+    deleteNodeFn(id)
+  }
+
   const renderObjectAsList = (obj: Record<string, string> | undefined) => {
     if (!obj || Object.keys(obj).length === 0) {
       return <span className="text-gray-500">None</span>
@@ -88,7 +98,7 @@ export const SecretInfo: React.FC<NodeProps<TypeServiceConfig>> = ({ data }) => 
   }
 
   return (
-    <NodeWrapper typeHandle='target' onDelete={() => console.log('sdg')}>
+    <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
       <div className="space-y-6 bg-white p-6 rounded-lg shadow-md">
         {/* Header */}
         <div className="flex justify-between items-start">
