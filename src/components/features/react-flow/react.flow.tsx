@@ -16,14 +16,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useUnit } from 'effector-react'
-import {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   $project,
   changeNodeByCurrentProject,
@@ -114,8 +107,8 @@ export const CustomReactFlow = () => {
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      if (kon.current) {
-        // @ts-ignore
+      if (kon.current !== null) {
+        //@ts-ignore
         kon.current?.onclick()
       }
       // Проверяем, есть ли изменения удаления

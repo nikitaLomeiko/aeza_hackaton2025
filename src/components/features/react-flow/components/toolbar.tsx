@@ -9,7 +9,6 @@ import { Portal } from 'components/ui/portal'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
 import { $project } from 'store/project'
-import { useDockerComposeExport } from 'store/project/hooks/useDockerComposeExport'
 import { convertReactFlowToDockerCompose } from 'store/project/utils/convertReactFlowToDockerCompose'
 
 export const Toolbar = () => {
