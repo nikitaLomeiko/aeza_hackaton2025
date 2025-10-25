@@ -1,14 +1,28 @@
 import { InviteModal } from 'components/features/invite-modal'
+import {
+  NotificationsButton,
+  NotificationsModal,
+} from 'components/features/notification-modal'
 import { GitHubLoginModal } from 'components/features/react-flow/components/GitHubLoginModal'
 import { useUnit } from 'effector-react'
 import { useState } from 'react'
 import { $project } from 'store/project'
+import { useNotifications } from 'store/project/hooks/use-notifications'
 
 export const Header: React.FC<{ onMenuToggle: () => void }> = ({
   onMenuToggle,
 }) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isVisibeLogin, setIsViisbleLogin] = useState(false)
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] =
+    useState(false)
+
+  const {
+    notifications,
+    notificationsCount,
+    handleAcceptNotification,
+    handleRejectNotification,
+  } = useNotifications()
 
   const projectState = useUnit($project)
   const currentProjectId = projectState.currentId
@@ -83,7 +97,7 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
           </div>
 
           {/* Правая часть - пользователь */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 gap-2">
             <div className="flex items-center space-x-3">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">
@@ -97,7 +111,7 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
             </div>
             <button
               onClick={inviteHandler}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="flex items-center space-x-3 gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               title="Пригласить участника"
             >
               <svg
@@ -114,6 +128,10 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
                 />
               </svg>
             </button>
+            <NotificationsButton
+              count={notificationsCount}
+              onClick={() => setIsNotificationsModalOpen(true)}
+            />
           </div>
         </div>
       </div>
@@ -128,6 +146,14 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         projectId={currentProjectId}
+      />
+
+      <NotificationsModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+        notifications={notifications}
+        onAcceptNotification={handleAcceptNotification}
+        onRejectNotification={handleRejectNotification}
       />
     </header>
   )
