@@ -1,22 +1,28 @@
 import { ConfigForm } from 'components/forms/config-form'
+import { DownloadForm } from 'components/forms/download-form'
 import { NetworkForm } from 'components/forms/network-form'
 import { SecretForm } from 'components/forms/secret-form'
 import { ServiceForm } from 'components/forms/service-form'
-
 import { VolumeForm } from 'components/forms/volume-form/volume.form'
 import { Modal } from 'components/ui/modal'
+import { Portal } from 'components/ui/portal'
+import { useUnit } from 'effector-react'
 import { useState } from 'react'
+import { $project } from 'store/project'
+import { useDockerComposeExport } from 'store/project/hooks/useDockerComposeExport'
+import { convertReactFlowToDockerCompose } from 'store/project/utils/convertReactFlowToDockerCompose'
 
 export const Toolbar = () => {
   const tools = [
     {
       id: 1,
       name: 'service',
+      label: 'Service',
       icon: (
         <svg
           stroke="currentColor"
           fill="currentColor"
-          stroke-width="0"
+          strokeWidth="0"
           role="img"
           viewBox="0 0 24 24"
           height="1em"
@@ -30,11 +36,12 @@ export const Toolbar = () => {
     {
       id: 2,
       name: 'network',
+      label: 'Network',
       icon: (
         <svg
           stroke="currentColor"
           fill="currentColor"
-          stroke-width="0"
+          strokeWidth="0"
           viewBox="0 0 512 512"
           height="1em"
           width="1em"
@@ -47,11 +54,12 @@ export const Toolbar = () => {
     {
       id: 3,
       name: 'volume',
+      label: 'Volume',
       icon: (
         <svg
           stroke="currentColor"
           fill="currentColor"
-          stroke-width="0"
+          strokeWidth="0"
           viewBox="0 0 16 16"
           height="1em"
           width="1em"
@@ -65,11 +73,12 @@ export const Toolbar = () => {
     {
       id: 4,
       name: 'secret',
+      label: 'Secret',
       icon: (
         <svg
           stroke="currentColor"
           fill="currentColor"
-          stroke-width="0"
+          strokeWidth="0"
           viewBox="0 0 512 512"
           height="1em"
           width="1em"
@@ -82,11 +91,12 @@ export const Toolbar = () => {
     {
       id: 5,
       name: 'config',
+      label: 'Config',
       icon: (
         <svg
           stroke="currentColor"
           fill="currentColor"
-          stroke-width="0"
+          strokeWidth="0"
           viewBox="0 0 512 512"
           height="1em"
           width="1em"
@@ -98,32 +108,46 @@ export const Toolbar = () => {
     },
     {
       id: 6,
-      name: 'Еще',
+      name: 'download',
+      label: 'Export YAML',
       icon: (
         <svg
-          className="w-5 h-5"
-          fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24"
+          fill="currentColor"
+          strokeWidth="0"
+          viewBox="0 0 512 512"
+          height="1em"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
-          />
+          <path d="M234.6 160v125.7l-44.7-43.6L160 272l96 96 96-96-29.9-31-44.7 44.7V160h-42.8z"></path>
+          <path d="M190.4 354.1L91.9 256l98.4-98.1-30-29.9L32 256l128.4 128 30-29.9zm131.2 0L420 256l-98.4-98.1 30-29.9L480 256 351.6 384l-30-29.9z"></path>
         </svg>
       ),
     },
   ]
 
   const [openModal, setOpenModal] = useState(false)
-
   const [typeForm, setTypeForm] = useState('')
+  const [activeTool, setActiveTool] = useState<string | null>(null)
+
+  const projectState = useUnit($project)
+
+  const currentProject = projectState.projects.find(
+    (item) => item.id === projectState.currentId
+  )
 
   const handleToolClick = (toolName: string) => {
     setOpenModal(true)
     setTypeForm(toolName)
+  }
+
+  const handleMouseEnter = (toolName: string) => {
+    setActiveTool(toolName)
+  }
+
+  const handleMouseLeave = () => {
+    setActiveTool(null)
   }
 
   return (
@@ -132,38 +156,72 @@ export const Toolbar = () => {
         <div className="bg-gray-900/95 backdrop-blur-md rounded-xl border border-gray-700 shadow-lg px-3 py-2">
           <div className="flex items-center space-x-1">
             {tools.map((tool) => (
-              <button
-                key={tool.id}
-                onClick={() => handleToolClick(tool.name)}
-                className="p-2 rounded-lg hover:bg-gray-700 transition-all duration-200 text-gray-400 hover:text-white"
-                title={tool.name}
-              >
-                {tool.icon}
-              </button>
+              <div key={tool.id} className="relative">
+                <button
+                  onClick={() => handleToolClick(tool.name)}
+                  onMouseEnter={() => handleMouseEnter(tool.name)}
+                  onMouseLeave={handleMouseLeave}
+                  className="p-3 rounded-lg hover:bg-gray-700 transition-all duration-200 text-gray-400 hover:text-white group relative"
+                  title={tool.label}
+                >
+                  {tool.icon}
+
+                  {/* Анимированная подсказка */}
+                  <div
+                    className={`
+                    absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                    px-2 py-1 bg-gray-800 text-white text-xs rounded
+                    whitespace-nowrap pointer-events-none
+                    transition-all duration-200 ease-out
+                    ${
+                      activeTool === tool.name
+                        ? 'opacity-100 translate-y-0 scale-100'
+                        : 'opacity-0 translate-y-1 scale-95'
+                    }
+                  `}
+                  >
+                    {tool.label}
+                    {/* Стрелочка */}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
+                  </div>
+                </button>
+              </div>
             ))}
           </div>
         </div>
       </div>
-      <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
-        {typeForm === 'service' && (
-          <ServiceForm onCancel={() => setOpenModal(false)} />
-        )}
-        {typeForm === 'volume' && (
-          <VolumeForm onCancel={() => setOpenModal(false)} />
-        )}
-        {typeForm === 'network' && (
-          <NetworkForm onCancel={() => setOpenModal(false)} />
-        )}
-        {typeForm === 'secret' && (
-          <SecretForm onCancel={() => setOpenModal(false)} />
-        )}
-        {typeForm === 'config' && (
-          <ConfigForm onCancel={() => setOpenModal(false)} />
-        )}
-      </Modal>
-      {/* <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
-        <ServiceForm onCancel={() => setOpenModal(false)} />
-      </Modal> */}
+
+      <Portal>
+        <Modal isOpen={openModal} onClose={() => setOpenModal(false)} size="lg">
+          {typeForm === 'service' && (
+            <ServiceForm onCancel={() => setOpenModal(false)} />
+          )}
+          {typeForm === 'volume' && (
+            <VolumeForm onCancel={() => setOpenModal(false)} />
+          )}
+          {typeForm === 'network' && (
+            <NetworkForm onCancel={() => setOpenModal(false)} />
+          )}
+          {typeForm === 'secret' && (
+            <SecretForm onCancel={() => setOpenModal(false)} />
+          )}
+          {typeForm === 'config' && (
+            <ConfigForm onCancel={() => setOpenModal(false)} />
+          )}
+          {typeForm === 'download' && (
+            <DownloadForm
+              initialData={{
+                code: convertReactFlowToDockerCompose({
+                  edges: currentProject?.edges || [],
+                  nodes: currentProject?.nodes || [],
+                  name: 'docker-compose.yaml',
+                }),
+              }}
+              onCancel={() => setOpenModal(false)}
+            />
+          )}
+        </Modal>
+      </Portal>
     </>
   )
 }

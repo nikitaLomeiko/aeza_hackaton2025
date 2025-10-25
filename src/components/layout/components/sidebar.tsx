@@ -1,55 +1,81 @@
-import { useUnit } from "effector-react";
-import React, { useState } from "react";
-import { IProject } from "store/project";
-import { $project, addNewProject, deleteProject, selectProject } from "store/project/project.store";
+import { FileInput } from 'components/ui/file-input/file.input'
+import { useUnit } from 'effector-react'
+import React, { useState } from 'react'
+import { convertDockerComposeToReactFlow, IProject } from 'store/project'
+import {
+  $project,
+  addNewProject,
+  deleteProject,
+  selectProject,
+} from 'store/project/project.store'
 
-const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const projectState = useUnit($project);
+const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
+  isOpen,
+  onClose,
+}) => {
+  const projectState = useUnit($project)
 
-  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectName, setNewProjectName] = useState('')
 
   const createNewProject = () => {
     if (newProjectName.trim()) {
       const newProject: IProject = {
         id: String(Date.now()),
         name: newProjectName.trim(),
-        status: "active",
-      };
-      addNewProject(newProject);
-      setNewProjectName("");
+        status: 'active',
+      }
+      addNewProject(newProject)
+      setNewProjectName('')
     }
-  };
+  }
+
+  const handleFileConverted = (jsonData: any, fileName: string) => {
+    const { nodes, edges } = convertDockerComposeToReactFlow(jsonData)
+    const newProject: IProject = {
+      id: String(Date.now()),
+      name: fileName,
+      status: 'active',
+      nodes,
+      edges,
+    }
+    addNewProject(newProject)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "completed":
-        return "bg-gray-100 text-gray-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
+      case 'active':
+        return 'bg-green-100 text-green-800'
+      case 'completed':
+        return 'bg-gray-100 text-gray-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800'
     }
-  };
+  }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "active":
-        return "Активный";
-      case "completed":
-        return "Завершен";
-      case "pending":
-        return "В ожидании";
+      case 'active':
+        return 'Активный'
+      case 'completed':
+        return 'Завершен'
+      case 'pending':
+        return 'В ожидании'
       default:
-        return status;
+        return status
     }
-  };
+  }
 
   return (
     <>
       {/* Overlay для мобильных */}
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
       {/* Sidebar */}
       <div
@@ -57,7 +83,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         fixed inset-y-0 top-2 left-0 z-50 w-80
         lg:relative lg:translate-x-0 lg:z-auto
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
       >
         {/* Фон с размытием */}
@@ -65,11 +91,26 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
           {/* Заголовок */}
           <div className="p-6 border-b border-gray-200/50">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Мои проекты</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Мои проекты
+              </h2>
               {/* Кнопка закрытия для мобильных */}
-              <button onClick={onClose} className="lg:hidden p-1 rounded-lg hover:bg-gray-100/50 transition-colors">
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <button
+                onClick={onClose}
+                className="lg:hidden p-1 rounded-lg hover:bg-gray-100/50 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -84,7 +125,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder="Название проекта..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyPress={(e) => e.key === "Enter" && createNewProject()}
+                onKeyPress={(e) => e.key === 'Enter' && createNewProject()}
               />
               <button
                 onClick={createNewProject}
@@ -108,17 +149,36 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                   <div
                     key={project.id}
                     onClick={() => selectProject(project.id)}
-                    className={`p-3 rounded-lg ${project.id === projectState.currentId ? 'bg-blue-500 hover:bg-blue-400' : 'hover:border-gray-200/50'} cursor-pointer transition-colors border border-transparent`}
+                    className={`p-3 rounded-lg ${
+                      project.id === projectState.currentId
+                        ? 'bg-blue-500 hover:bg-blue-400'
+                        : 'hover:border-gray-200/50'
+                    } cursor-pointer transition-colors border border-transparent`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-2 h-2 ${project.id === projectState.currentId ? 'bg-white' : 'bg-blue-500'} rounded-full`}></div>
-                        <span className="text-sm font-medium text-gray-900">{project.name}</span>
+                        <div
+                          className={`w-2 h-2 ${
+                            project.id === projectState.currentId
+                              ? 'bg-white'
+                              : 'bg-blue-500'
+                          } rounded-full`}
+                        ></div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {project.name}
+                        </span>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(project.status)}`}>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
+                          project.status
+                        )}`}
+                      >
                         {getStatusText(project.status)}
                       </span>
-                      <button onClick={() => deleteProject(project.id)} className="cursor-pointer">
+                      <button
+                        onClick={() => deleteProject(project.id)}
+                        className="cursor-pointer"
+                      >
                         <svg
                           stroke="currentColor"
                           fill="currentColor"
@@ -134,18 +194,21 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                     </div>
                   </div>
                 ))}
+                <FileInput onFileConverted={handleFileConverted} />
               </div>
             </div>
           </div>
 
           {/* Футер sidebar */}
           <div className="p-4 border-t border-gray-200/50">
-            <div className="text-center text-xs text-gray-500">© 2024 NovaSphere</div>
+            <div className="text-center text-xs text-gray-500">
+              © 2024 NovaSphere
+            </div>
           </div>
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar

@@ -9,6 +9,7 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
   data,
 }) => {
   const renderDriverOptions = () => {
+    console.log(data)
     if (!data.driver_opts || Object.keys(data.driver_opts).length === 0)
       return null
 
@@ -207,7 +208,10 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
   }
 
   return (
-    <NodeWrapper typeHandle='target' onDelete={() => console.log('Delete network')}>
+    <NodeWrapper
+      typeHandle="target"
+      onDelete={() => console.log('Delete network')}
+    >
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
         {/* Заголовок */}
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">

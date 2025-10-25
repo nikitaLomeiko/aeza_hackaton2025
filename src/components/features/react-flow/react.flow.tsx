@@ -19,6 +19,7 @@ import { useUnit } from 'effector-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   $project,
+  changeNodeByCurrentProject,
   setEdgesByCurrentProject,
   setNodesByCurrentProject,
 } from 'store/project'
@@ -29,6 +30,8 @@ import { NetworkNode } from './nodes/network.node'
 import { SecretInfo } from './nodes/secret.node'
 import { ConfigInfo } from './nodes/config.node'
 import { Toolbar } from './components/toolbar'
+import { Modal } from 'components/ui/modal'
+import { PathForm } from 'components/forms/path-form'
 
 const customNode = {
   volume: VolumeInfo,
@@ -44,6 +47,12 @@ export const CustomReactFlow = () => {
   const currentProject = projectState.projects.find(
     (item) => item.id === projectState.currentId
   )
+
+  const [openModal, setOpenModal] = useState(false)
+  const [currentEdge, setCurrentEdge] = useState<{
+    source: string
+    target: string
+  }>()
 
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
@@ -76,6 +85,22 @@ export const CustomReactFlow = () => {
     []
   )
 
+  const onChangeVolume = (path: string) => {
+    const nodeSource = nodes.find(
+      (nodeItem) => nodeItem.id === currentEdge?.source
+    )
+    const nodeTarget = nodes.find(
+      (nodeItem) => nodeItem.id === currentEdge?.target
+    )
+
+    if (nodeSource?.data && nodeTarget?.data) {
+      ;(nodeSource.data.volumes as string[]).push(
+        `${nodeTarget.data.name}:${path}`
+      )
+      changeNodeByCurrentProject({ id: nodeSource.id, node: nodeSource })
+    }
+  }
+
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot))
@@ -88,9 +113,16 @@ export const CustomReactFlow = () => {
     setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot))
   }, [])
 
-  const onConnect = useCallback((params: Connection | Edge) => {
-    setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
-  }, [])
+  const onConnect = useCallback(
+    (params: Connection | Edge) => {
+      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
+      if (nodes.find((node) => node.id === params.target)?.type === 'volume') {
+        setCurrentEdge({ source: params.source, target: params.target })
+        setOpenModal(true)
+      }
+    },
+    [nodes]
+  )
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -109,16 +141,20 @@ export const CustomReactFlow = () => {
         <>
           <span>{currentProject?.name}</span>
           <ReactFlow
+            minZoom={0.1}
             nodes={nodes}
             edges={edges}
             nodeTypes={customNode}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onEdgeClick={(e, edge) =>
+              setEdges((edges) => edges.filter((item) => item.id !== edge.id))
+            }
             onConnect={onConnect}
             fitView
           >
             <Panel position="bottom-center">
-              <Toolbar/>
+              <Toolbar />
             </Panel>
             <Controls />
             <MiniMap />
@@ -126,6 +162,12 @@ export const CustomReactFlow = () => {
           </ReactFlow>
         </>
       )}
+      <Modal isOpen={openModal} onClose={() => setOpenModal(false)}>
+        <PathForm
+          onSubmit={onChangeVolume}
+          onCancel={() => setOpenModal(false)}
+        />
+      </Modal>
     </div>
   )
 }
