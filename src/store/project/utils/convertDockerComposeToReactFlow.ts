@@ -75,8 +75,9 @@ export const convertDockerComposeToReactFlow = (
         position: { x: 0, y: 0 },
         data: {
           label: volumeName,
+          name: volumeName,
           type: 'volume',
-          config: composeConfig.volumes![volumeName],
+          ...composeConfig.volumes![volumeName],
         },
       })
     })
@@ -91,8 +92,9 @@ export const convertDockerComposeToReactFlow = (
         position: { x: 0, y: 0 },
         data: {
           label: secretName,
+          name: secretName,
           type: 'secret',
-          config: composeConfig.secrets![secretName],
+          ...composeConfig.secrets![secretName],
         },
       })
     })
@@ -107,8 +109,9 @@ export const convertDockerComposeToReactFlow = (
         position: { x: 0, y: 0 },
         data: {
           label: configName,
+          name: configName,
           type: 'config',
-          config: composeConfig.configs![configName],
+          ...composeConfig.configs![configName],
         },
       })
     })

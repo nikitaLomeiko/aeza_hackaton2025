@@ -17,29 +17,99 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
     deleteNodeFn(id)
   }
 
+  // SVG иконки
+  const NetworkIcon = () => (
+    <svg
+      className="w-6 h-6"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+      <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+      <line x1="8" y1="10" x2="16" y2="10" />
+      <line x1="8" y1="18" x2="16" y2="18" />
+      <line x1="12" y1="6" x2="12" y2="10" />
+      <line x1="12" y1="14" x2="12" y2="18" />
+    </svg>
+  )
+
+  const SettingsIcon = () => (
+    <svg
+      className="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+
+  const TagIcon = () => (
+    <svg
+      className="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+    </svg>
+  )
+
+  const IpIcon = () => (
+    <svg
+      className="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  )
+
+  const FlagIcon = () => (
+    <svg
+      className="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <line x1="4" y1="22" x2="4" y2="15" />
+    </svg>
+  )
+
   const renderDriverOptions = () => {
-    console.log(data)
     if (!data.driver_opts || Object.keys(data.driver_opts).length === 0)
       return null
 
     const driverOpts = Object.entries(data.driver_opts)
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-          <span className="text-xs font-medium text-gray-700">
+          <SettingsIcon />
+          <span className="text-sm font-semibold text-gray-700">
             Driver Options
           </span>
-          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
             {driverOpts.length}
           </span>
         </div>
-        <div className="max-h-40 overflow-y-auto space-y-1.5 bg-gray-50 rounded-lg p-2 border border-gray-200">
+        <div className="max-h-40 overflow-y-auto space-y-2 bg-orange-50 rounded-lg p-3 border border-orange-200">
           {driverOpts.map(([key, value], index) => (
-            <div key={key} className="group relative">
-              <div className="flex items-start gap-2 p-1.5 rounded hover:bg-white transition-colors">
-                <div className="w-1 h-1 bg-orange-300 rounded-full mt-2 flex-shrink-0"></div>
+            <div key={key} className="group">
+              <div className="flex items-start gap-2 p-2 rounded hover:bg-white transition-colors">
+                <div className="w-1.5 h-1.5 bg-orange-400 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs text-gray-700 font-mono break-all">
                     {key} = {value}
@@ -47,7 +117,7 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
                 </div>
               </div>
               {index < driverOpts.length - 1 && (
-                <div className="absolute bottom-0 left-3 right-2 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                <div className="h-px bg-gradient-to-r from-transparent via-orange-200 to-transparent"></div>
               )}
             </div>
           ))}
@@ -62,19 +132,19 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
     const labels = Object.entries(data.labels)
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-          <span className="text-xs font-medium text-gray-700">Labels</span>
-          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+          <TagIcon />
+          <span className="text-sm font-semibold text-gray-700">Labels</span>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
             {labels.length}
           </span>
         </div>
-        <div className="max-h-40 overflow-y-auto space-y-1.5 bg-gray-50 rounded-lg p-2 border border-gray-200">
+        <div className="max-h-40 overflow-y-auto space-y-2 bg-purple-50 rounded-lg p-3 border border-purple-200">
           {labels.map(([key, value], index) => (
-            <div key={key} className="group relative">
-              <div className="flex items-start gap-2 p-1.5 rounded hover:bg-white transition-colors">
-                <div className="w-1 h-1 bg-purple-300 rounded-full mt-2 flex-shrink-0"></div>
+            <div key={key} className="group">
+              <div className="flex items-start gap-2 p-2 rounded hover:bg-white transition-colors">
+                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs text-gray-700 font-mono break-all">
                     {key} = {value}
@@ -82,7 +152,7 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
                 </div>
               </div>
               {index < labels.length - 1 && (
-                <div className="absolute bottom-0 left-3 right-2 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                <div className="h-px bg-gradient-to-r from-transparent via-purple-200 to-transparent"></div>
               )}
             </div>
           ))}
@@ -97,51 +167,57 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-          <span className="text-xs font-medium text-gray-700">
+          <IpIcon />
+          <span className="text-sm font-semibold text-gray-700">
             IPAM Configuration
           </span>
-          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
             {data.ipam.config.length}
           </span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {data.ipam.config.map((config, index) => (
             <div
               key={index}
-              className="bg-blue-50 rounded-lg p-3 border border-blue-100 space-y-1.5"
+              className="bg-blue-50 rounded-lg p-4 border border-blue-200 space-y-2"
             >
               {config.subnet && (
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-600">
-                    Subnet:
-                  </span>
-                  <span className="text-xs text-gray-800 font-mono">
-                    {config.subnet}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-600">
+                      Subnet:
+                    </span>
+                    <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded border border-blue-300">
+                      {config.subnet}
+                    </span>
+                  </div>
                 </div>
               )}
               {config.ip_range && (
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-600">
-                    IP Range:
-                  </span>
-                  <span className="text-xs text-gray-800 font-mono">
-                    {config.ip_range}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-600">
+                      IP Range:
+                    </span>
+                    <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded border border-blue-300">
+                      {config.ip_range}
+                    </span>
+                  </div>
                 </div>
               )}
               {config.gateway && (
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 bg-blue-300 rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-600">
-                    Gateway:
-                  </span>
-                  <span className="text-xs text-gray-800 font-mono">
-                    {config.gateway}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-600">
+                      Gateway:
+                    </span>
+                    <span className="text-xs text-gray-800 font-mono bg-white px-2 py-1 rounded border border-blue-300">
+                      {config.gateway}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -158,21 +234,21 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
     const ipamOptions = Object.entries(data.ipam.options)
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-          <span className="text-xs font-medium text-gray-700">
+          <SettingsIcon />
+          <span className="text-sm font-semibold text-gray-700">
             IPAM Options
           </span>
-          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
             {ipamOptions.length}
           </span>
         </div>
-        <div className="max-h-32 overflow-y-auto space-y-1.5 bg-gray-50 rounded-lg p-2 border border-gray-200">
+        <div className="max-h-32 overflow-y-auto space-y-2 bg-green-50 rounded-lg p-3 border border-green-200">
           {ipamOptions.map(([key, value], index) => (
-            <div key={key} className="group relative">
-              <div className="flex items-start gap-2 p-1.5 rounded hover:bg-white transition-colors">
-                <div className="w-1 h-1 bg-green-300 rounded-full mt-2 flex-shrink-0"></div>
+            <div key={key} className="group">
+              <div className="flex items-start gap-2 p-2 rounded hover:bg-white transition-colors">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-1.5 flex-shrink-0"></div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs text-gray-700 font-mono break-all">
                     {key} = {value}
@@ -180,7 +256,7 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
                 </div>
               </div>
               {index < ipamOptions.length - 1 && (
-                <div className="absolute bottom-0 left-3 right-2 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                <div className="h-px bg-gradient-to-r from-transparent via-green-200 to-transparent"></div>
               )}
             </div>
           ))}
@@ -200,17 +276,22 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
     if (flags.length === 0) return null
 
     return (
-      <div className="flex items-center gap-3">
-        <div className="w-2 h-2 bg-indigo-400 rounded-full flex-shrink-0"></div>
-        <div className="flex flex-wrap gap-1.5">
-          {flags.map((flag, index) => (
-            <span
-              key={index}
-              className="px-2.5 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full border border-indigo-200 font-medium"
-            >
-              {flag}
-            </span>
-          ))}
+      <div className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+        <FlagIcon />
+        <div className="flex-1">
+          <span className="text-sm font-semibold text-gray-700 block mb-2">
+            Network Flags
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {flags.map((flag, index) => (
+              <span
+                key={index}
+                className="px-3 py-1.5 bg-indigo-100 text-indigo-800 text-sm rounded-lg border border-indigo-200 font-medium shadow-sm"
+              >
+                {flag}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -218,26 +299,31 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
 
   return (
     <NodeWrapper typeHandle="target" onDelete={handleDelete} nodeId={id}>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-w-72 max-w-96 backdrop-blur-sm bg-opacity-95">
+      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-200 p-6 min-w-80 max-w-md backdrop-blur-sm">
         {/* Заголовок */}
-        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-          <div className="w-4 h-4 bg-gradient-to-br from-green-500 to-green-600 rounded-full shadow-sm"></div>
-          <h3 className="font-semibold text-gray-900 truncate text-lg">
-            Network: {data.name || 'Unnamed Network'}
-          </h3>
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+          <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-sm">
+            <NetworkIcon />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 truncate text-lg">
+              {data.name || 'Unnamed Network'}
+            </h3>
+            <p className="text-sm text-gray-500">Docker Network</p>
+          </div>
         </div>
 
         {/* Основная информация */}
         <div className="space-y-4">
           {/* Driver */}
           {data.driver && (
-            <div className="flex items-center gap-3 group">
-              <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+              <SettingsIcon />
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-gray-600">
                   Driver
                 </span>
-                <span className="px-2.5 py-1 bg-green-100 text-green-800 text-xs rounded-full border border-green-200 font-medium capitalize">
+                <span className="px-3 py-1.5 bg-green-100 text-green-800 text-sm rounded-full border border-green-200 font-medium capitalize shadow-sm">
                   {data.driver}
                 </span>
               </div>
@@ -246,13 +332,13 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
 
           {/* IPAM Driver */}
           {data.ipam?.driver && (
-            <div className="flex items-center gap-3 group">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full flex-shrink-0"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-3 p-3 bg-cyan-50 rounded-lg border border-cyan-100">
+              <IpIcon />
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-gray-600">
                   IPAM Driver
                 </span>
-                <span className="text-sm text-gray-800 font-mono bg-cyan-50 px-2 py-1 rounded border border-cyan-100">
+                <span className="text-sm text-gray-800 font-mono bg-white px-3 py-1.5 rounded border border-cyan-200 shadow-sm">
                   {data.ipam.driver}
                 </span>
               </div>
@@ -273,6 +359,15 @@ export const NetworkNode: React.FC<NodeProps<TypeNetworkConfig>> = ({
 
           {/* Boolean Flags */}
           {renderBooleanFlags()}
+        </div>
+
+        {/* Status Indicator */}
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-200">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-gray-600">Network Ready</span>
+          </div>
+          <div className="text-xs text-gray-400">ID: {id.slice(0, 8)}...</div>
         </div>
       </div>
     </NodeWrapper>

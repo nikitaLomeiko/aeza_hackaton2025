@@ -6,7 +6,6 @@ import {
   VolumeConfig,
   SecretConfig,
   ConfigConfig,
-  NetworkMapping,
 } from 'types/docker-compose.type'
 //@ts-ignore
 import yaml from 'js-yaml'
@@ -52,6 +51,37 @@ const getRestartPolicy = (
     : undefined
 }
 
+const getVolumeMappings = (value: unknown): string[] | undefined => {
+  if (Array.isArray(value)) {
+    const filtered = value.filter(
+      (item) => typeof item === 'string' && item.trim() !== ''
+    )
+    return filtered.length > 0 ? filtered : undefined
+  }
+  return undefined
+}
+
+const getEnvironment = (
+  value: unknown
+): Record<string, string> | string[] | undefined => {
+  if (Array.isArray(value)) {
+    const filtered = value.filter(
+      (item) => typeof item === 'string' && item.trim() !== ''
+    )
+    return filtered.length > 0 ? filtered : undefined
+  }
+
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const entries = Object.entries(value).filter(
+      ([key, val]) =>
+        typeof key === 'string' && typeof val === 'string' && key.trim() !== ''
+    )
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined
+  }
+
+  return undefined
+}
+
 export const convertReactFlowToDockerCompose = ({
   nodes,
   edges,
@@ -94,7 +124,7 @@ export const convertReactFlowToDockerCompose = ({
       image: getString(serviceNode.data.image),
       container_name: getString(serviceNode.data.container_name),
       ports: getStringArray(serviceNode.data.ports),
-      environment: getRecord(serviceNode.data.environment),
+      environment: getEnvironment(serviceNode.data.environment),
       restart: getRestartPolicy(serviceNode.data.restart),
       command:
         getStringArray(serviceNode.data.command) ||
@@ -104,97 +134,157 @@ export const convertReactFlowToDockerCompose = ({
         getString(serviceNode.data.entrypoint),
       user: getString(serviceNode.data.user),
       working_dir: getString(serviceNode.data.working_dir),
+      depends_on: getStringArray(serviceNode.data.depends_on) || [],
     }
 
-    // Находим связанные сети через edges
-    const networkEdges = edges.filter(
-      (edge) =>
-        edge.source === serviceNode.id &&
-        networkNodes.some((netNode) => netNode.id === edge.target)
-    )
+    // Обрабатываем volumes
+    const volumesFromServiceData = getVolumeMappings(serviceNode.data.volumes)
+    if (volumesFromServiceData) {
+      serviceConfig.volumes = volumesFromServiceData
+    } else {
+      const volumeEdges = edges.filter(
+        (edge) =>
+          edge.source === serviceNode.id &&
+          volumeNodes.some((volNode) => volNode.id === edge.target)
+      )
 
-    if (networkEdges.length > 0) {
-      const networkNames = networkEdges
-        .map((edge) => {
-          const networkNode = networkNodes.find(
-            (netNode) => netNode.id === edge.target
-          )
-          return (
-            getString(networkNode?.data.label) ||
-            getString(networkNode?.data.name)
-          )
-        })
-        .filter((name): name is string => !!name)
+      if (volumeEdges.length > 0) {
+        const volumeMappings = volumeEdges
+          .map((edge) => {
+            const volumeNode = volumeNodes.find(
+              (volNode) => volNode.id === edge.target
+            )
+            const volumeName = getString(volumeNode?.data.name)
 
-      if (networkNames.length > 0) {
-        serviceConfig.networks = networkNames
+            if (!volumeName) return null
+
+            const mountPath =
+              getString(volumeNode?.data.mountPath) ||
+              getString(volumeNode?.data.target) ||
+              '/data'
+
+            return `${volumeName}:${mountPath}`
+          })
+          .filter((mapping): mapping is string => !!mapping)
+
+        if (volumeMappings.length > 0) {
+          serviceConfig.volumes = volumeMappings
+        }
       }
     }
 
-    // Находим связанные volumes через edges
-    const volumeEdges = edges.filter(
-      (edge) =>
-        edge.source === serviceNode.id &&
-        volumeNodes.some((volNode) => volNode.id === edge.target)
-    )
+    // Обрабатываем networks
+    const networksFromServiceData = getStringArray(serviceNode.data.networks)
+    if (networksFromServiceData) {
+      serviceConfig.networks = networksFromServiceData
+    } else {
+      const networkEdges = edges.filter(
+        (edge) =>
+          edge.source === serviceNode.id &&
+          networkNodes.some((netNode) => netNode.id === edge.target)
+      )
 
-    if (volumeEdges.length > 0) {
-      const volumeMappings = volumeEdges
-        .map((edge) => {
-          const volumeNode = volumeNodes.find(
-            (volNode) => volNode.id === edge.target
-          )
-          const volumeName = getString(volumeNode?.data.label)
-          return volumeName ? `${volumeName}:/data` : null
-        })
-        .filter((mapping): mapping is string => !!mapping)
+      if (networkEdges.length > 0) {
+        const networkNames = networkEdges
+          .map((edge) => {
+            const networkNode = networkNodes.find(
+              (netNode) => netNode.id === edge.target
+            )
+            return (
+              getString(networkNode?.data.label) ||
+              getString(networkNode?.data.name)
+            )
+          })
+          .filter((name): name is string => !!name)
 
-      if (volumeMappings.length > 0) {
-        serviceConfig.volumes = volumeMappings
+        if (networkNames.length > 0) {
+          serviceConfig.networks = networkNames
+        }
       }
     }
 
-    // Находим связанные secrets через edges
-    const secretEdges = edges.filter(
-      (edge) =>
-        edge.source === serviceNode.id &&
-        secretNodes.some((secNode) => secNode.id === edge.target)
-    )
+    // Обрабатываем depends_on
+    const dependsOnFromServiceData = getStringArray(serviceNode.data.depends_on)
+    if (dependsOnFromServiceData) {
+      serviceConfig.depends_on = dependsOnFromServiceData
+    } else {
+      // Автоматически определяем зависимости через edges между сервисами
+      const serviceEdges = edges.filter(
+        (edge) =>
+          edge.source === serviceNode.id &&
+          serviceNodes.some((svcNode) => svcNode.id === edge.target)
+      )
 
-    if (secretEdges.length > 0) {
-      const secretNames = secretEdges
-        .map((edge) => {
-          const secretNode = secretNodes.find(
-            (secNode) => secNode.id === edge.target
-          )
-          return getString(secretNode?.data.label)
-        })
-        .filter((name): name is string => !!name)
+      if (serviceEdges.length > 0) {
+        const dependencyNames = serviceEdges
+          .map((edge) => {
+            const targetServiceNode = serviceNodes.find(
+              (svcNode) => svcNode.id === edge.target
+            )
+            return (
+              getString(targetServiceNode?.data.label) ||
+              getString(targetServiceNode?.data.container_name)
+            )
+          })
+          .filter((name): name is string => !!name)
 
-      if (secretNames.length > 0) {
-        serviceConfig.secrets = secretNames
+        if (dependencyNames.length > 0) {
+          serviceConfig.depends_on = dependencyNames
+        }
       }
     }
 
-    // Находим связанные configs через edges
-    const configEdges = edges.filter(
-      (edge) =>
-        edge.source === serviceNode.id &&
-        configNodes.some((confNode) => confNode.id === edge.target)
-    )
+    // Обрабатываем secrets
+    const secretsFromServiceData = getStringArray(serviceNode.data.secrets)
+    if (secretsFromServiceData) {
+      serviceConfig.secrets = secretsFromServiceData
+    } else {
+      const secretEdges = edges.filter(
+        (edge) =>
+          edge.source === serviceNode.id &&
+          secretNodes.some((secNode) => secNode.id === edge.target)
+      )
 
-    if (configEdges.length > 0) {
-      const configNames = configEdges
-        .map((edge) => {
-          const configNode = configNodes.find(
-            (confNode) => confNode.id === edge.target
-          )
-          return getString(configNode?.data.label)
-        })
-        .filter((name): name is string => !!name)
+      if (secretEdges.length > 0) {
+        const secretNames = secretEdges
+          .map((edge) => {
+            const secretNode = secretNodes.find(
+              (secNode) => secNode.id === edge.target
+            )
+            return getString(secretNode?.data.label)
+          })
+          .filter((name): name is string => !!name)
 
-      if (configNames.length > 0) {
-        serviceConfig.configs = configNames
+        if (secretNames.length > 0) {
+          serviceConfig.secrets = secretNames
+        }
+      }
+    }
+
+    // Обрабатываем configs
+    const configsFromServiceData = getStringArray(serviceNode.data.configs)
+    if (configsFromServiceData) {
+      serviceConfig.configs = configsFromServiceData
+    } else {
+      const configEdges = edges.filter(
+        (edge) =>
+          edge.source === serviceNode.id &&
+          configNodes.some((confNode) => confNode.id === edge.target)
+      )
+
+      if (configEdges.length > 0) {
+        const configNames = configEdges
+          .map((edge) => {
+            const configNode = configNodes.find(
+              (confNode) => confNode.id === edge.target
+            )
+            return getString(configNode?.data.label)
+          })
+          .filter((name): name is string => !!name)
+
+        if (configNames.length > 0) {
+          serviceConfig.configs = configNames
+        }
       }
     }
 
@@ -229,13 +319,13 @@ export const convertReactFlowToDockerCompose = ({
           ? networkNode.data.enable_ipv6
           : undefined,
       //@ts-ignore
-      ipam: networkNode.data.ipam, // Оставляем как есть, так как это сложный объект
+      ipam: networkNode.data.ipam,
       internal:
         typeof networkNode.data.internal === 'boolean'
           ? networkNode.data.internal
           : undefined,
       labels: getRecord(networkNode.data.labels),
-      external: networkNode.data.external as { name?: string }, // Оставляем как есть
+      external: networkNode.data.external as { name?: string },
       name: getString(networkNode.data.name),
     }
 
@@ -264,7 +354,7 @@ export const convertReactFlowToDockerCompose = ({
     const volumeConfig: VolumeConfig = {
       driver: getString(volumeNode.data.driver),
       driver_opts: getRecord(volumeNode.data.driver_opts),
-      external: volumeNode.data.external as { name?: string }, // Оставляем как есть
+      external: volumeNode.data.external as { name?: string },
       labels: getRecord(volumeNode.data.labels),
       name: getString(volumeNode.data.name),
     }
@@ -293,7 +383,7 @@ export const convertReactFlowToDockerCompose = ({
 
     const secretConfig: SecretConfig = {
       file: getString(secretNode.data.file),
-      external: secretNode.data.external as { name?: string }, // Оставляем как есть
+      external: secretNode.data.external as { name?: string },
       labels: getRecord(secretNode.data.labels),
       name: getString(secretNode.data.name),
       environment: getString(secretNode.data.environment),
@@ -324,7 +414,7 @@ export const convertReactFlowToDockerCompose = ({
 
     const configConfig: ConfigConfig = {
       file: getString(configNode.data.file),
-      external: configNode.data.external as { name?: string }, // Оставляем как есть
+      external: configNode.data.external as { name?: string },
       labels: getRecord(configNode.data.labels),
       name: getString(configNode.data.name),
       content: getString(configNode.data.content),
@@ -364,7 +454,7 @@ export const convertReactFlowToDockerCompose = ({
   // Конвертируем в YAML
   const yamlString = yaml.dump(composeConfig, {
     indent: 2,
-    lineWidth: -1, // Без переносов строк
+    lineWidth: -1,
     noRefs: true,
     skipInvalid: true,
   })

@@ -123,9 +123,10 @@ export type ServiceConfig = {
   image?: string
   //   build?: BuildConfig;
   container_name?: string
+  depends_on: string[]
   ports?: PortMapping[]
   //   expose?: string[];
-  volumes?: VolumeMapping[] // links
+  volumes?: string[] // links
   networks?: Record<string, NetworkMapping> | string[] // links
   environment?: Record<string, string> | string[]
   //   env_file?: string | string[];
