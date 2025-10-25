@@ -107,14 +107,14 @@ export const CustomReactFlow = () => {
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      if (kon.current !== null) {
-        //@ts-ignore
-        kon.current?.onclick()
-      }
       // Проверяем, есть ли изменения удаления
       const removeChanges = changes.filter((change) => change.type === 'remove')
 
       if (removeChanges.length > 0) {
+        if (kon.current !== null) {
+          //@ts-ignore
+          kon.current?.onclick()
+        }
         // Для удаления - немедленно вызываем deleteNode для каждой ноды
         removeChanges.forEach((change) => {
           if (change.type === 'remove' && change.id) {
