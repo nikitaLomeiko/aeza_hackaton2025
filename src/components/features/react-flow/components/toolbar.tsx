@@ -1,4 +1,5 @@
 import { ConfigForm } from 'components/forms/config-form'
+import { DeployForm } from 'components/forms/deploy-form'
 import { DownloadForm } from 'components/forms/download-form'
 import { NetworkForm } from 'components/forms/network-form'
 import { SecretForm } from 'components/forms/secret-form'
@@ -128,6 +129,25 @@ export const Toolbar = () => {
       ),
       color: 'from-emerald-500 to-emerald-600',
     },
+    {
+      id: 7,
+      name: 'deploy',
+      label: 'Deploy',
+      icon: (
+        <svg
+          stroke="currentColor"
+          fill="currentColor"
+          stroke-width="0"
+          viewBox="0 0 1024 1024"
+          height="1em"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M811.4 418.7C765.6 297.9 648.9 212 512.2 212S258.8 297.8 213 418.6C127.3 441.1 64 519.1 64 612c0 110.5 89.5 200 199.9 200h496.2C870.5 812 960 722.5 960 612c0-92.7-63.1-170.7-148.6-193.3z"></path>
+        </svg>
+      ),
+      color: 'from-emerald-500 to-emerald-600',
+    },
   ]
 
   const [openModal, setOpenModal] = useState(false)
@@ -248,6 +268,16 @@ export const Toolbar = () => {
           )}
           {typeForm === 'config' && (
             <ConfigForm onCancel={() => setOpenModal(false)} />
+          )}
+          {typeForm === 'deploy' && (
+            <DeployForm
+              dockerConfig={convertReactFlowToDockerCompose({
+                edges: currentProject?.edges || [],
+                nodes: currentProject?.nodes || [],
+                name: 'docker-compose.yaml',
+              })}
+              onCancel={() => setOpenModal(false)}
+            />
           )}
           {typeForm === 'download' && (
             <DownloadForm

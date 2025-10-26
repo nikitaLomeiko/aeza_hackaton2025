@@ -1,4 +1,5 @@
 export enum EndpointsEnum {
-  PRODUCTS = "/products",
-  POSTS = "/posts",
+  PRODUCTS = '/products',
+  POSTS = '/posts',
+  SSH = '/ssh',
 }

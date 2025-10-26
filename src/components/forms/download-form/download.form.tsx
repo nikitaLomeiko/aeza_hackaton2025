@@ -120,15 +120,7 @@ export const DownloadForm: React.FC<CodeEditorFormProps> = ({
 
       {/* Buttons */}
       <div className="flex gap-4 justify-between">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleDownload}
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            Download File
-          </button>
-        </div>
+        <div className="flex gap-2"></div>
 
         <div className="flex gap-4">
           {onCancel && (
@@ -141,10 +133,11 @@ export const DownloadForm: React.FC<CodeEditorFormProps> = ({
             </button>
           )}
           <button
-            type="submit"
-            className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type="button"
+            onClick={handleDownload}
+            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
-            Save as Node
+            Download File
           </button>
         </div>
       </div>
