@@ -237,10 +237,10 @@ export interface DockerComposeConfig {
   version?: string
   name?: string
   services: Record<string, ServiceConfig>
-  networks: Record<string, NetworkConfig>
-  volumes: Record<string, VolumeConfig>
-  secrets: Record<string, SecretConfig>
-  configs: Record<string, ConfigConfig>
+  networks?: Record<string, NetworkConfig>
+  volumes?: Record<string, VolumeConfig>
+  secrets?: Record<string, SecretConfig>
+  configs?: Record<string, ConfigConfig>
   //   x-*?: any; // Custom extensions
 }
 

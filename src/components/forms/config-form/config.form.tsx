@@ -69,12 +69,17 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
     updated[index][field] = value
     setLabels(updated)
 
+    // Создаем объект лейблов только если есть хотя бы один непустой ключ
     const labelsObject = updated.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value
+      if (key.trim() !== '') acc[key] = value
       return acc
     }, {} as Record<string, string>)
 
-    handleInputChange('labels', labelsObject)
+    // Если объект пустой - устанавливаем undefined, иначе объект
+    handleInputChange(
+      'labels',
+      Object.keys(labelsObject).length > 0 ? labelsObject : undefined
+    )
   }
 
   const addLabel = () => {
@@ -82,7 +87,19 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
   }
 
   const removeLabel = (index: number) => {
-    setLabels((prev) => prev.filter((_, i) => i !== index))
+    const updated = labels.filter((_, i) => i !== index)
+    setLabels(updated)
+
+    // После удаления пересчитываем labels объект
+    const labelsObject = updated.reduce((acc, { key, value }) => {
+      if (key.trim() !== '') acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
+
+    handleInputChange(
+      'labels',
+      Object.keys(labelsObject).length > 0 ? labelsObject : undefined
+    )
   }
 
   const handleExternalChange = (value: boolean) => {
@@ -112,10 +129,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
 
     const submitData: Partial<ConfigConfig> = {
       ...formData,
-      labels:
-        Object.keys(formData.labels || {}).length > 0
-          ? formData.labels
-          : undefined,
+      // labels уже обработан в handleLabelsChange и будет undefined если пустой
       external:
         typeof formData.external === 'object' && formData.external?.name
           ? formData.external
@@ -390,7 +404,7 @@ export const ConfigForm: React.FC<ConfigFormProps> = ({
           type="submit"
           className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Create Config
+          {isEdit ? 'Update Config' : 'Create Config'}
         </button>
       </div>
     </form>

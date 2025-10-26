@@ -82,6 +82,40 @@ const getEnvironment = (
   return undefined
 }
 
+// Функция для очистки объекта от пустых полей
+const cleanConfigObject = <T extends object>(obj: T): Partial<T> => {
+  const cleaned = Object.fromEntries(
+    Object.entries(obj).filter(([_, value]) => {
+      if (value === undefined || value === null) return false
+      if (Array.isArray(value)) return value.length > 0
+      if (typeof value === 'object') return Object.keys(value).length > 0
+      if (typeof value === 'string') return value.trim() !== ''
+      return true
+    })
+  )
+  return Object.keys(cleaned).length > 0 ? (cleaned as Partial<T>) : {}
+}
+
+// Функция для извлечения имен volumes из volume маппингов
+const extractVolumeNamesFromMappings = (volumeMappings: string[]): string[] => {
+  const volumeNames = new Set<string>()
+
+  volumeMappings.forEach((mapping) => {
+    if (typeof mapping === 'string') {
+      // Разбираем строку формата "source:target" или "source:target:mode"
+      const parts = mapping.split(':')
+      const source = parts[0]
+
+      // Если source не начинается с / или ./ (не bind mount), то это named volume
+      if (source && !source.startsWith('/') && !source.startsWith('./')) {
+        volumeNames.add(source)
+      }
+    }
+  })
+
+  return Array.from(volumeNames)
+}
+
 export const convertReactFlowToDockerCompose = ({
   nodes,
   edges,
@@ -89,10 +123,6 @@ export const convertReactFlowToDockerCompose = ({
 }: ReactFlowToDockerComposeParams): string => {
   const composeConfig: DockerComposeConfig = {
     services: {},
-    configs: {},
-    networks: {},
-    secrets: {},
-    volumes: {},
   }
 
   // Добавляем необязательные поля только если они есть
@@ -111,6 +141,19 @@ export const convertReactFlowToDockerCompose = ({
   const volumeNodes = nodes.filter((node) => node.type === 'volume')
   const secretNodes = nodes.filter((node) => node.type === 'secret')
   const configNodes = nodes.filter((node) => node.type === 'config')
+
+  // Собираем все volume names из volume маппингов сервисов
+  const volumeNamesFromServices = new Set<string>()
+
+  // Создаем мапу volume нод для быстрого доступа по имени
+  const volumeNodesMap = new Map<string, Node>()
+  volumeNodes.forEach((volumeNode) => {
+    const volumeName =
+      getString(volumeNode.data.name) || getString(volumeNode.data.label)
+    if (volumeName) {
+      volumeNodesMap.set(volumeName, volumeNode)
+    }
+  })
 
   // Обрабатываем сервисы
   serviceNodes.forEach((serviceNode) => {
@@ -134,13 +177,17 @@ export const convertReactFlowToDockerCompose = ({
         getString(serviceNode.data.entrypoint),
       user: getString(serviceNode.data.user),
       working_dir: getString(serviceNode.data.working_dir),
-      depends_on: getStringArray(serviceNode.data.depends_on) || [],
+      depends_on: getStringArray(serviceNode.data.depends_on),
     }
 
     // Обрабатываем volumes
     const volumesFromServiceData = getVolumeMappings(serviceNode.data.volumes)
     if (volumesFromServiceData) {
       serviceConfig.volumes = volumesFromServiceData
+
+      // Извлекаем имена volumes из маппингов
+      const volumeNames = extractVolumeNamesFromMappings(volumesFromServiceData)
+      volumeNames.forEach((name) => volumeNamesFromServices.add(name))
     } else {
       const volumeEdges = edges.filter(
         (edge) =>
@@ -169,6 +216,14 @@ export const convertReactFlowToDockerCompose = ({
 
         if (volumeMappings.length > 0) {
           serviceConfig.volumes = volumeMappings
+
+          // Добавляем имена volumes из edges
+          volumeMappings.forEach((mapping) => {
+            const volumeName = mapping.split(':')[0]
+            if (volumeName) {
+              volumeNamesFromServices.add(volumeName)
+            }
+          })
         }
       }
     }
@@ -251,7 +306,10 @@ export const convertReactFlowToDockerCompose = ({
             const secretNode = secretNodes.find(
               (secNode) => secNode.id === edge.target
             )
-            return getString(secretNode?.data.label)
+            return (
+              getString(secretNode?.data.label) ||
+              getString(secretNode?.data.name)
+            )
           })
           .filter((name): name is string => !!name)
 
@@ -278,7 +336,10 @@ export const convertReactFlowToDockerCompose = ({
             const configNode = configNodes.find(
               (confNode) => confNode.id === edge.target
             )
-            return getString(configNode?.data.label)
+            return (
+              getString(configNode?.data.label) ||
+              getString(configNode?.data.name)
+            )
           })
           .filter((name): name is string => !!name)
 
@@ -288,20 +349,14 @@ export const convertReactFlowToDockerCompose = ({
       }
     }
 
-    // Очищаем пустые поля
-    const cleanedConfig = Object.fromEntries(
-      Object.entries(serviceConfig).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0
-        if (typeof value === 'object')
-          return Object.keys(value || {}).length > 0
-        return value !== undefined && value !== null && value !== ''
-      })
-    ) as ServiceConfig
-
-    composeConfig.services[serviceName] = cleanedConfig
+    // Очищаем пустые поля сервиса
+    const cleanedConfig = cleanConfigObject(serviceConfig)
+    if (Object.keys(cleanedConfig).length > 0) {
+      composeConfig.services[serviceName] = cleanedConfig as ServiceConfig
+    }
   })
 
-  // Обрабатываем сети
+  // Обрабатываем сети - исключаем поле name
   networkNodes.forEach((networkNode) => {
     const networkName =
       getString(networkNode.data.label) || getString(networkNode.data.name)
@@ -326,29 +381,20 @@ export const convertReactFlowToDockerCompose = ({
           : undefined,
       labels: getRecord(networkNode.data.labels),
       external: networkNode.data.external as { name?: string },
-      name: getString(networkNode.data.name),
+      // Исключаем поле name, так как оно уже используется как ключ
     }
 
     // Очищаем пустые поля
-    const cleanedConfig = Object.fromEntries(
-      Object.entries(networkConfig).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0
-        if (typeof value === 'object')
-          return Object.keys(value || {}).length > 0
-        return value !== undefined && value !== null && value !== ''
-      })
-    ) as NetworkConfig
-
+    const cleanedConfig = cleanConfigObject(networkConfig)
     if (Object.keys(cleanedConfig).length > 0) {
-      networks[networkName] = cleanedConfig
-    } else {
-      networks[networkName] = {}
+      networks[networkName] = cleanedConfig as NetworkConfig
     }
   })
 
-  // Обрабатываем volumes
+  // Обрабатываем volumes - исключаем поле name
   volumeNodes.forEach((volumeNode) => {
-    const volumeName = getString(volumeNode.data.label)
+    const volumeName =
+      getString(volumeNode.data.name) || getString(volumeNode.data.label)
     if (!volumeName) return
 
     const volumeConfig: VolumeConfig = {
@@ -356,84 +402,67 @@ export const convertReactFlowToDockerCompose = ({
       driver_opts: getRecord(volumeNode.data.driver_opts),
       external: volumeNode.data.external as { name?: string },
       labels: getRecord(volumeNode.data.labels),
-      name: getString(volumeNode.data.name),
+      // Исключаем поле name, так как оно уже используется как ключ
     }
 
     // Очищаем пустые поля
-    const cleanedConfig = Object.fromEntries(
-      Object.entries(volumeConfig).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0
-        if (typeof value === 'object')
-          return Object.keys(value || {}).length > 0
-        return value !== undefined && value !== null && value !== ''
-      })
-    ) as VolumeConfig
-
+    const cleanedConfig = cleanConfigObject(volumeConfig)
     if (Object.keys(cleanedConfig).length > 0) {
-      volumes[volumeName] = cleanedConfig
+      volumes[volumeName] = cleanedConfig as VolumeConfig
     } else {
+      // Даже если конфигурация пустая, добавляем volume с пустым объектом
       volumes[volumeName] = {}
     }
   })
 
-  // Обрабатываем secrets
+  // Добавляем volumes, которые используются в сервисах, но не имеют явных volume нод
+  volumeNamesFromServices.forEach((volumeName) => {
+    if (!volumes[volumeName]) {
+      // Создаем минимальную конфигурацию volume
+      volumes[volumeName] = {}
+    }
+  })
+
+  // Обрабатываем secrets - исключаем поле name
   secretNodes.forEach((secretNode) => {
-    const secretName = getString(secretNode.data.label)
+    const secretName =
+      getString(secretNode.data.label) || getString(secretNode.data.name)
     if (!secretName) return
 
     const secretConfig: SecretConfig = {
       file: getString(secretNode.data.file),
       external: secretNode.data.external as { name?: string },
       labels: getRecord(secretNode.data.labels),
-      name: getString(secretNode.data.name),
       environment: getString(secretNode.data.environment),
       content: getString(secretNode.data.content),
+      // Исключаем поле name, так как оно уже используется как ключ
     }
 
     // Очищаем пустые поля
-    const cleanedConfig = Object.fromEntries(
-      Object.entries(secretConfig).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0
-        if (typeof value === 'object')
-          return Object.keys(value || {}).length > 0
-        return value !== undefined && value !== null && value !== ''
-      })
-    ) as SecretConfig
-
+    const cleanedConfig = cleanConfigObject(secretConfig)
     if (Object.keys(cleanedConfig).length > 0) {
-      secrets[secretName] = cleanedConfig
-    } else {
-      secrets[secretName] = {}
+      secrets[secretName] = cleanedConfig as SecretConfig
     }
   })
 
-  // Обрабатываем configs
+  // Обрабатываем configs - исключаем поле name
   configNodes.forEach((configNode) => {
-    const configName = getString(configNode.data.label)
+    const configName =
+      getString(configNode.data.name) || getString(configNode.data.label)
     if (!configName) return
 
     const configConfig: ConfigConfig = {
       file: getString(configNode.data.file),
       external: configNode.data.external as { name?: string },
       labels: getRecord(configNode.data.labels),
-      name: getString(configNode.data.name),
       content: getString(configNode.data.content),
+      // Исключаем поле name, так как оно уже используется как ключ
     }
 
     // Очищаем пустые поля
-    const cleanedConfig = Object.fromEntries(
-      Object.entries(configConfig).filter(([_, value]) => {
-        if (Array.isArray(value)) return value.length > 0
-        if (typeof value === 'object')
-          return Object.keys(value || {}).length > 0
-        return value !== undefined && value !== null && value !== ''
-      })
-    ) as ConfigConfig
-
+    const cleanedConfig = cleanConfigObject(configConfig)
     if (Object.keys(cleanedConfig).length > 0) {
-      configs[configName] = cleanedConfig
-    } else {
-      configs[configName] = {}
+      configs[configName] = cleanedConfig as ConfigConfig
     }
   })
 
