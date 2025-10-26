@@ -35,7 +35,6 @@ export const GitHubLoginModal: React.FC<GitHubLoginModalProps> = ({
         <div className="space-y-4">
           <a
             href={githubAuthUrl}
-            target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 no-underline"
             onClick={onClose} // Закрываем модалку при клике
