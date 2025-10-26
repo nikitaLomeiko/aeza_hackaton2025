@@ -173,7 +173,7 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-[600px] bg-white rounded-2xl shadow-xl overflow-hidden"
+      className="flex bg-white rounded-2xl shadow-xl overflow-hidden"
     >
       {/* Sidebar Navigation */}
       <div className="w-64 bg-gradient-to-b from-blue-50 to-gray-50 border-r border-gray-200 p-6">
