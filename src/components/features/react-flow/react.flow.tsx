@@ -25,7 +25,6 @@ import {
 } from 'store/project'
 import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
-import { debounce } from 'lodash'
 import { NetworkNode } from './nodes/network.node'
 import { SecretInfo } from './nodes/secret.node'
 import { ConfigInfo } from './nodes/config.node'
@@ -33,6 +32,7 @@ import { Toolbar } from './components/toolbar'
 import { Modal } from 'components/ui/modal'
 import { PathForm } from 'components/forms/path-form'
 import { deleteNode } from 'store/project/project.store'
+import { CollaboratorButtons } from './components/collaborator-buttons'
 
 const customNode = {
   volume: VolumeInfo,
@@ -357,6 +357,9 @@ export const CustomReactFlow = () => {
           >
             <Panel position="bottom-center">
               <Toolbar />
+            </Panel>
+            <Panel position="top-right">
+              <CollaboratorButtons projectId={currentProject.id} />
             </Panel>
             <Controls />
             <MiniMap />
