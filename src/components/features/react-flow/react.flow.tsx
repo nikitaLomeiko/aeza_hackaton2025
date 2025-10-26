@@ -359,7 +359,7 @@ export const CustomReactFlow = () => {
               <Toolbar />
             </Panel>
             <Controls />
-            <MiniMap />
+            <MiniMap className="xl:block hidden" />
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
         </>
