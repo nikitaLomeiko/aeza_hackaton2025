@@ -151,9 +151,13 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         data: { ...validData },
       })
     else {
+      console.log(currentNode)
       changeNodeByCurrentProject({
         id: currentNode?.id || '',
-        node: { ...currentNode, data: { ...validData } } as Node,
+        node: {
+          ...currentNode,
+          data: { ...validData, volumes: currentNode?.data.volumes },
+        } as Node,
       })
     }
     onCancel?.()

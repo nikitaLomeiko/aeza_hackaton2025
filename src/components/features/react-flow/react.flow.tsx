@@ -16,7 +16,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useUnit } from 'effector-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   $project,
   changeNodeByCurrentProject,
@@ -47,8 +47,6 @@ export const CustomReactFlow = () => {
   const deleteNodeFn = useUnit(deleteNode)
 
   const kon = useRef<null | HTMLDivElement>(null)
-
-  const [isSaved, setSave] = useState(false)
 
   const currentProject = projectState.projects.find(
     (item) => item.id === projectState.currentId
@@ -117,7 +115,6 @@ export const CustomReactFlow = () => {
       }
 
       setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot))
-      setSave(true)
     },
     [nodes, deleteNodeFn]
   )
@@ -161,6 +158,7 @@ export const CustomReactFlow = () => {
             nodeTypes={customNode}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onNodeDragStop={() => setNodesByCurrentProject(nodes)}
             onEdgeClick={(e, edge) =>
               setEdges((edges) => edges.filter((item) => item.id !== edge.id))
             }
@@ -170,32 +168,6 @@ export const CustomReactFlow = () => {
             <Panel position="bottom-center">
               <Toolbar />
             </Panel>
-            {isSaved && (
-              <Panel position="top-right">
-                <button
-                  onClick={() => {
-                    setNodesByCurrentProject(nodes)
-                    setSave(false)
-                  }}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 hover:shadow-xl active:scale-95"
-                >
-                  <svg
-                    className="w-5 h-5 inline-block mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Сохранить
-                </button>
-              </Panel>
-            )}
             <Controls />
             <MiniMap />
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
