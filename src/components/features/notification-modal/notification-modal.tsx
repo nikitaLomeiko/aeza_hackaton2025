@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Modal } from 'components/ui/modal'
-import { NotificationsList } from './notification-list'
+import { NotificationItem, NotificationsList } from './notification-list'
 import { NotificationsEmpty } from './notifications-empty'
+import { ApiClient } from 'api/client'
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -19,6 +20,24 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   onRejectNotification,
 }) => {
   const notificationsCount = notifications.length
+
+  const fetchData = async () => {
+    const token = localStorage.getItem('authToken')
+
+    const { data } = await ApiClient({
+      url: '/userinfo',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    console.log(data)
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   return (
     <Modal

@@ -25,7 +25,6 @@ import {
 } from 'store/project'
 import { CustomNode } from './nodes/service.node'
 import { VolumeInfo } from './nodes/volume.node'
-import { debounce } from 'lodash'
 import { NetworkNode } from './nodes/network.node'
 import { SecretInfo } from './nodes/secret.node'
 import { ConfigInfo } from './nodes/config.node'
@@ -33,6 +32,9 @@ import { Toolbar } from './components/toolbar'
 import { Modal } from 'components/ui/modal'
 import { PathForm } from 'components/forms/path-form'
 import { deleteNode } from 'store/project/project.store'
+import { WebSocketProvider } from '../websockets/websocket-provider'
+import { CursorsProvider } from '../cursor'
+import { useWebSocket } from 'store/project/hooks/use-websocket'
 
 const customNode = {
   volume: VolumeInfo,
@@ -45,6 +47,8 @@ const customNode = {
 export const CustomReactFlow = () => {
   const projectState = useUnit($project)
   const deleteNodeFn = useUnit(deleteNode)
+
+  const { lock, unlock, sendUpdate } = useWebSocket()
 
   const kon = useRef<null | HTMLDivElement>(null)
 
@@ -80,6 +84,28 @@ export const CustomReactFlow = () => {
   useEffect(() => {
     setEdgesByCurrentProject(edges)
   }, [edges])
+
+  const handleNodeChange = (changes: NodeChange[]) => {
+    // Запрашиваем блокировку при начале редактирования
+    if (changes.length > 0 && currentProject) {
+      const userId = localStorage.getItem('userId') || 'anonymous'
+      lock(currentProject.id, userId, 'node_edit')
+    }
+
+    // ... остальная логика обработки изменений
+
+    // Отправляем обновления на сервер
+    if (currentProject) {
+      sendUpdate(currentProject.id, nodes, edges)
+    }
+  }
+
+  const handleEditComplete = () => {
+    // Снимаем блокировку при завершении редактирования
+    if (currentProject) {
+      unlock(currentProject.id)
+    }
+  }
 
   const onChangeVolume = (path: string) => {
     const nodeSource = nodes.find(
@@ -339,29 +365,39 @@ export const CustomReactFlow = () => {
         </div>
       ) : (
         <>
-          <span>{currentProject?.name}</span>
-          <ReactFlow
-            ref={kon}
-            minZoom={0.1}
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={customNode}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeDragStop={() => setNodesByCurrentProject(nodes)}
-            onEdgeClick={(e, edge) =>
-              setEdges((edges) => edges.filter((item) => item.id !== edge.id))
-            }
-            onConnect={onConnect}
-            fitView
-          >
-            <Panel position="bottom-center">
-              <Toolbar />
-            </Panel>
-            <Controls />
-            <MiniMap />
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-          </ReactFlow>
+          <WebSocketProvider projectId={currentProject.id}>
+            <CursorsProvider projectId={currentProject.id}>
+              <span>{currentProject?.name}</span>
+              <ReactFlow
+                ref={kon}
+                minZoom={0.1}
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={customNode}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onNodeDragStop={() => setNodesByCurrentProject(nodes)}
+                onEdgeClick={(e, edge) =>
+                  setEdges((edges) =>
+                    edges.filter((item) => item.id !== edge.id)
+                  )
+                }
+                onConnect={onConnect}
+                fitView
+              >
+                <Panel position="bottom-center">
+                  <Toolbar />
+                </Panel>
+                <Controls />
+                <MiniMap />
+                <Background
+                  variant={BackgroundVariant.Dots}
+                  gap={12}
+                  size={1}
+                />
+              </ReactFlow>
+            </CursorsProvider>
+          </WebSocketProvider>
         </>
       )}
       <Modal isOpen={openModal} onClose={() => setOpenModal(false)}>
