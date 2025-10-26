@@ -1,3 +1,4 @@
+import { ApiClient } from 'api/client'
 import { InviteModal } from 'components/features/invite-modal'
 import {
   NotificationsButton,
@@ -33,6 +34,17 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
       return
     }
     setIsVisibleLogin(true)
+  }
+
+  const publishHandler = async () => {
+    const { data, status } = await ApiClient({
+      url: '/publish_project',
+      method: 'POST',
+      data: JSON.stringify({ projectId: currentProjectId }),
+    })
+
+    console.log(status)
+    console.log(data)
   }
 
   return (
@@ -95,7 +107,7 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
           {/* Правая часть - пользователь и действия */}
           <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
             {/* Кнопка приглашения - урезаем раньше */}
-            <button
+            {/* <button
               onClick={inviteHandler}
               className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-3 sm:py-2.5 lg:px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 group"
             >
@@ -118,6 +130,12 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
               <span className="text-sm font-semibold sm:hidden lg:inline-block xl:hidden">
                 Invite
               </span>
+            </button> */}
+            <button
+              onClick={publishHandler}
+              className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 sm:px-3 sm:py-2.5 lg:px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 group"
+            >
+              Опубликовать
             </button>
 
             {/* Уведомления */}
