@@ -5,7 +5,7 @@ import {
 } from 'components/features/notification-modal'
 import { GitHubLoginModal } from 'components/features/react-flow/components/GitHubLoginModal'
 import { useUnit } from 'effector-react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { $project } from 'store/project'
 import { useNotifications } from 'store/project/hooks/use-notifications'
 
@@ -27,14 +27,13 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
   const projectState = useUnit($project)
   const currentProjectId = projectState.currentId
 
-  const inviteHandler = () => {
-    setIsInviteModalOpen(true)
-    // if (localStorage.getItem('token')) {
-    //   setIsInviteModalOpen(true)
-    //   return
-    // }
+  const inviteHandler = async () => {
+    if (localStorage.getItem('authToken')) {
+      setIsInviteModalOpen(true)
+      return
+    }
 
-    // setIsViisbleLogin(true)
+    setIsViisbleLogin(true)
   }
 
   return (
@@ -139,7 +138,7 @@ export const Header: React.FC<{ onMenuToggle: () => void }> = ({
       <GitHubLoginModal
         isOpen={isVisibeLogin}
         onClose={() => setIsViisbleLogin(false)}
-        githubAuthUrl="http://localhost:8080/auth?provider=github"
+        githubAuthUrl="http://185.221.199.159:8080/auth?provider=github"
       />
 
       <InviteModal
