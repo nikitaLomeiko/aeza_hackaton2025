@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   validateServiceConfig,
   ValidatedServiceConfig,
@@ -49,15 +49,30 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
     Array.isArray(formData.ports) ? formData.ports : []
   )
 
-  // 👇 Новое: состояние ошибок
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [activeSection, setActiveSection] = useState('basic')
+
+  // Синхронизация environmentVars с formData.environment
+  useEffect(() => {
+    const envObject = environmentVars.reduce((acc, { key, value }) => {
+      if (key.trim()) acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
+
+    handleInputChange('environment', envObject)
+  }, [environmentVars])
+
+  // Синхронизация ports с formData.ports
+  useEffect(() => {
+    const validPorts = ports.filter((port) => port.trim())
+    handleInputChange('ports', validPorts)
+  }, [ports])
 
   const handleInputChange = (field: keyof ServiceConfig, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }))
-    // Очищаем ошибку при изменении поля
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -75,13 +90,6 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
     const updated = [...environmentVars]
     updated[index][field] = value
     setEnvironmentVars(updated)
-
-    const envObject = updated.reduce((acc, { key, value }) => {
-      if (key) acc[key] = value
-      return acc
-    }, {} as Record<string, string>)
-
-    handleInputChange('environment', envObject)
   }
 
   const addEnvironmentVar = () => {
@@ -89,17 +97,14 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
   }
 
   const removeEnvironmentVar = (index: number) => {
-    setEnvironmentVars((prev) => prev.filter((_, i) => i !== index))
+    const updated = environmentVars.filter((_, i) => i !== index)
+    setEnvironmentVars(updated)
   }
 
   const handlePortChange = (index: number, value: string) => {
     const updated = [...ports]
     updated[index] = value
     setPorts(updated)
-    handleInputChange(
-      'ports',
-      updated.filter((p) => p)
-    )
   }
 
   const addPort = () => {
@@ -107,13 +112,13 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
   }
 
   const removePort = (index: number) => {
-    setPorts((prev) => prev.filter((_, i) => i !== index))
+    const updated = ports.filter((_, i) => i !== index)
+    setPorts(updated)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Подготавливаем данные как раньше
     const submitData: Partial<ServiceConfig> = Object.fromEntries(
       Object.entries(formData).filter(([_, value]) => {
         if (Array.isArray(value)) return value.length > 0
@@ -123,14 +128,11 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
       })
     )
 
-    // 🔍 Валидация через Valibot
     const result = validateServiceConfig(submitData)
 
     if (!result.success) {
-      // Преобразуем ошибки Valibot в объект { fieldName: message }
       const fieldErrors: Record<string, string> = {}
       for (const issue of result.issues) {
-        // Valibot использует путь вида ['image'], ['ports', 0] и т.д.
         const path = issue.path?.[0]?.key
         if (typeof path === 'string') {
           fieldErrors[path] = issue.message || 'Invalid value'
@@ -140,7 +142,6 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
       return
     }
 
-    // ✅ Успешная валидация
     const validData = result.output as ValidatedServiceConfig
 
     if (!isEdit)
@@ -151,7 +152,6 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
         data: { ...validData },
       })
     else {
-      console.log(currentNode)
       changeNodeByCurrentProject({
         id: currentNode?.id || '',
         node: {
@@ -163,263 +163,366 @@ export const ServiceForm: React.FC<ServiceFormProps> = ({
     onCancel?.()
   }
 
+  const sections = [
+    { id: 'basic', name: 'Basic', icon: '⚙️' },
+    { id: 'network', name: 'Network', icon: '🌐' },
+    { id: 'environment', name: 'Environment', icon: '🔧' },
+    { id: 'advanced', name: 'Advanced', icon: '🚀' },
+  ]
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white p-6 rounded-lg shadow-md"
+      className="flex h-[600px] bg-white rounded-2xl shadow-xl overflow-hidden"
     >
-      {/* Image */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Image *
-        </label>
-        <input
-          type="text"
-          value={formData.image || ''}
-          onChange={(e) => handleInputChange('image', e.target.value)}
-          placeholder="nginx:alpine"
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.image
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
-        />
-        {errors.image && (
-          <p className="mt-1 text-sm text-red-600">{errors.image}</p>
-        )}
+      {/* Sidebar Navigation */}
+      <div className="w-64 bg-gradient-to-b from-blue-50 to-gray-50 border-r border-gray-200 p-6">
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-sm">🐳</span>
+            </div>
+            {isEdit ? 'Edit Service' : 'New Service'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Configure your Docker service
+          </p>
+        </div>
+
+        <nav className="space-y-2">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() => setActiveSection(section.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                activeSection === section.id
+                  ? 'bg-white shadow-md border border-blue-100 text-blue-600'
+                  : 'text-gray-600 hover:bg-white/50 hover:shadow-sm'
+              }`}
+            >
+              <span className="text-lg">{section.icon}</span>
+              <div>
+                <div className="font-medium text-sm">{section.name}</div>
+              </div>
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* Container Name */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Container Name
-        </label>
-        <input
-          type="text"
-          value={formData.container_name || ''}
-          onChange={(e) => handleInputChange('container_name', e.target.value)}
-          placeholder="my-container"
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.container_name
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
-        />
-        {errors.container_name && (
-          <p className="mt-1 text-sm text-red-600">{errors.container_name}</p>
-        )}
-      </div>
+      {/* Main Form Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-8">
+          {/* Basic Section */}
+          {activeSection === 'basic' && (
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Basic Configuration
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Essential service settings
+                </p>
+              </div>
 
-      {/* Ports */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Ports
-        </label>
-        <div className="space-y-2">
-          {ports.map((port, index) => (
-            <div key={index} className="flex gap-2">
-              <input
-                type="text"
-                value={port}
-                onChange={(e) => handlePortChange(index, e.target.value)}
-                placeholder="8080:80"
-                className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                  errors.ports
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-blue-500'
-                }`}
-              />
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.image || ''}
+                    onChange={(e) => handleInputChange('image', e.target.value)}
+                    placeholder="nginx:alpine"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                      errors.image
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500'
+                    }`}
+                  />
+                  {errors.image && (
+                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                      <span>⚠️</span> {errors.image}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Container Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.container_name || ''}
+                    onChange={(e) =>
+                      handleInputChange('container_name', e.target.value)
+                    }
+                    placeholder="my-container"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                      errors.container_name
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500'
+                    }`}
+                  />
+                  {errors.container_name && (
+                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                      <span>⚠️</span> {errors.container_name}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Restart Policy
+                  </label>
+                  <select
+                    value={formData.restart || 'unless-stopped'}
+                    onChange={(e) =>
+                      handleInputChange('restart', e.target.value)
+                    }
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                      errors.restart
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500'
+                    }`}
+                  >
+                    <option value="no">No</option>
+                    <option value="always">Always</option>
+                    <option value="on-failure">On Failure</option>
+                    <option value="unless-stopped">Unless Stopped</option>
+                  </select>
+                  {errors.restart && (
+                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                      <span>⚠️</span> {errors.restart}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    User
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.user || ''}
+                    onChange={(e) => handleInputChange('user', e.target.value)}
+                    placeholder="root"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Network Section */}
+          {activeSection === 'network' && (
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Network Configuration
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Port mappings and networking
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Port Mappings
+                </label>
+                <div className="space-y-3">
+                  {ports.map((port, index) => (
+                    <div key={index} className="flex gap-3 items-center">
+                      <input
+                        type="text"
+                        value={port}
+                        onChange={(e) =>
+                          handlePortChange(index, e.target.value)
+                        }
+                        placeholder="8080:80"
+                        className={`flex-1 px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                          errors.ports
+                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-200 focus:ring-blue-500 focus:border-blue-500'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePort(index)}
+                        className="px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors duration-200 flex items-center gap-2"
+                      >
+                        <span>🗑️</span>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addPort}
+                    className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <span>➕</span> Add Port Mapping
+                  </button>
+                </div>
+                {errors.ports && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <span>⚠️</span> {errors.ports}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Environment Section */}
+          {activeSection === 'environment' && (
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Environment Variables
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Configure service environment
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {environmentVars.map((env, index) => (
+                  <div key={index} className="flex gap-3 items-center">
+                    <input
+                      type="text"
+                      value={env.key}
+                      onChange={(e) =>
+                        handleEnvironmentChange(index, 'key', e.target.value)
+                      }
+                      placeholder="VARIABLE_NAME"
+                      className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    />
+                    <input
+                      type="text"
+                      value={env.value}
+                      onChange={(e) =>
+                        handleEnvironmentChange(index, 'value', e.target.value)
+                      }
+                      placeholder="value"
+                      className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeEnvironmentVar(index)}
+                      className="px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <span>🗑️</span>
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addEnvironmentVar}
+                  className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors duration-200 flex items-center gap-2"
+                >
+                  <span>➕</span> Add Environment Variable
+                </button>
+              </div>
+              {errors.environment && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <span>⚠️</span> {errors.environment}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Advanced Section */}
+          {activeSection === 'advanced' && (
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Advanced Configuration
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Additional service settings
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Command
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      Array.isArray(formData.command)
+                        ? formData.command.join(' ')
+                        : formData.command || ''
+                    }
+                    onChange={(e) =>
+                      handleInputChange('command', e.target.value.split(' '))
+                    }
+                    placeholder="npm start"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Entrypoint
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      Array.isArray(formData.entrypoint)
+                        ? formData.entrypoint.join(' ')
+                        : formData.entrypoint || ''
+                    }
+                    onChange={(e) =>
+                      handleInputChange('entrypoint', e.target.value.split(' '))
+                    }
+                    placeholder="/bin/sh -c"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Working Directory
+                </label>
+                <input
+                  type="text"
+                  value={formData.working_dir || ''}
+                  onChange={(e) =>
+                    handleInputChange('working_dir', e.target.value)
+                  }
+                  placeholder="/app"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="border-t border-gray-200 p-6 bg-gray-50">
+          <div className="flex gap-3 justify-end">
+            {onCancel && (
               <button
                 type="button"
-                onClick={() => removePort(index)}
-                className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                onClick={onCancel}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors duration-200 font-medium"
               >
-                Remove
+                Cancel
               </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addPort}
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-          >
-            Add Port
-          </button>
+            )}
+            <button
+              type="submit"
+              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+            >
+              {isEdit ? 'Update Service' : 'Create Service'}
+            </button>
+          </div>
         </div>
-        {errors.ports && (
-          <p className="mt-1 text-sm text-red-600">{errors.ports}</p>
-        )}
-      </div>
-
-      {/* Environment Variables */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Environment Variables
-        </label>
-        <div className="space-y-2">
-          {environmentVars.map((env, index) => (
-            <div key={index} className="flex gap-2">
-              <input
-                type="text"
-                value={env.key}
-                onChange={(e) =>
-                  handleEnvironmentChange(index, 'key', e.target.value)
-                }
-                placeholder="VARIABLE_NAME"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="text"
-                value={env.value}
-                onChange={(e) =>
-                  handleEnvironmentChange(index, 'value', e.target.value)
-                }
-                placeholder="value"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => removeEnvironmentVar(index)}
-                className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addEnvironmentVar}
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-          >
-            Add Environment Variable
-          </button>
-        </div>
-        {errors.environment && (
-          <p className="mt-1 text-sm text-red-600">{errors.environment}</p>
-        )}
-      </div>
-
-      {/* Restart Policy */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Restart Policy
-        </label>
-        <select
-          value={formData.restart || 'unless-stopped'}
-          onChange={(e) => handleInputChange('restart', e.target.value)}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            errors.restart
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
-        >
-          <option value="no">No</option>
-          <option value="always">Always</option>
-          <option value="on-failure">On Failure</option>
-          <option value="unless-stopped">Unless Stopped</option>
-        </select>
-        {errors.restart && (
-          <p className="mt-1 text-sm text-red-600">{errors.restart}</p>
-        )}
-      </div>
-
-      {/* Command */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Command
-        </label>
-        <input
-          type="text"
-          value={
-            Array.isArray(formData.command)
-              ? formData.command.join(' ')
-              : formData.command || ''
-          }
-          onChange={(e) =>
-            handleInputChange('command', e.target.value.split(' '))
-          }
-          placeholder="npm start"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {errors.command && (
-          <p className="mt-1 text-sm text-red-600">{errors.command}</p>
-        )}
-      </div>
-
-      {/* Entrypoint */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Entrypoint
-        </label>
-        <input
-          type="text"
-          value={
-            Array.isArray(formData.entrypoint)
-              ? formData.entrypoint.join(' ')
-              : formData.entrypoint || ''
-          }
-          onChange={(e) =>
-            handleInputChange('entrypoint', e.target.value.split(' '))
-          }
-          placeholder="/bin/sh -c"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {errors.entrypoint && (
-          <p className="mt-1 text-sm text-red-600">{errors.entrypoint}</p>
-        )}
-      </div>
-
-      {/* User */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          User
-        </label>
-        <input
-          type="text"
-          value={formData.user || ''}
-          onChange={(e) => handleInputChange('user', e.target.value)}
-          placeholder="root"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {errors.user && (
-          <p className="mt-1 text-sm text-red-600">{errors.user}</p>
-        )}
-      </div>
-
-      {/* Working Directory */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Working Directory
-        </label>
-        <input
-          type="text"
-          value={formData.working_dir || ''}
-          onChange={(e) => handleInputChange('working_dir', e.target.value)}
-          placeholder="/app"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {errors.working_dir && (
-          <p className="mt-1 text-sm text-red-600">{errors.working_dir}</p>
-        )}
-      </div>
-
-      {/* Buttons */}
-      <div className="flex gap-4 justify-end pt-4 border-t border-gray-200">
-        {onCancel && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-        )}
-        <button
-          type="submit"
-          className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Save Service
-        </button>
       </div>
     </form>
   )
