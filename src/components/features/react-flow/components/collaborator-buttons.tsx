@@ -1,7 +1,7 @@
 import { ApiClient } from 'api/client'
 import { useUnit } from 'effector-react'
 import React, { useState } from 'react'
-import { $project } from 'store/project'
+import { $project, IProject, updateProject } from 'store/project'
 
 interface GitActionsProps {
   projectId: string
@@ -41,6 +41,8 @@ export const CollaboratorButtons: React.FC<GitActionsProps> = ({
       const { data } = await ApiClient({
         url: `${projectId}`,
       })
+
+      updateProject(data as IProject)
     } catch (error) {
       console.error('Pull failed:', error)
     } finally {
